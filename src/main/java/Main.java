@@ -46,8 +46,21 @@ public class Main {
 
             AerospikeClient client = new AerospikeClient(host, Integer.parseInt(port));
 
-            TestSimple test = new TestSimple();
-            test.run(client, namespace);
+            TestSimpleThread thread1 = new TestSimpleThread(client, namespace);
+            TestSimpleThread thread2 = new TestSimpleThread(client, namespace);
+            TestSimpleThread thread3 = new TestSimpleThread(client, namespace);
+            thread1.start();
+            thread2.start();
+            thread3.start();
+
+            try {
+                thread1.join();
+                thread2.join();
+                thread3.join();
+            }
+            catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
 
             client.close();
         } catch (ParseException e) {
