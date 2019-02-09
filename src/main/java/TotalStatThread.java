@@ -9,23 +9,29 @@ public class TotalStatThread extends Thread {
     }
 
     public void run() {
-        long beforeMillis = System.currentTimeMillis();
-
-//        while (t)
-//
-//        long n = 0;
-//        long currMillis = beforeMillis;
-//        while (currMillis < beforeMillis + m_intervalMillis) {
-//            n = n + execute(client, namespace);
-//            currMillis = System.currentTimeMillis();
-//        }
-//
-//        m_current_rows_per_sec = Math.round(n/((currMillis-beforeMillis)/1000));
-//        m_total_secs += currMillis-beforeMillis;
-//        m_total_rows += n;
-//
-//        System.out.println("[" + getName() + "][" + formatDate(currMillis) + "]: " + m_current_rows_per_sec + " per sec" );
-
+        while (getLogicThreadsAliveCnt() > 0) {
+            try {
+                sleep(1000);
+            }
+            catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+            long currMillis = System.currentTimeMillis();
+            long m_current_rows_per_sec = 0;
+            for(TestSimpleThread logicThread : m_logicTheads) {
+                m_current_rows_per_sec += logicThread.getCurrentRowsPerSec();
+            }
+            System.out.println("[total][" + TestSimpleThread.formatDate(currMillis) + "]: " + m_current_rows_per_sec + " per sec" );
+        }
     }
 
+    private int getLogicThreadsAliveCnt() {
+        int ret = 0;
+        for(TestSimpleThread logicThread : m_logicTheads) {
+            if (logicThread.isAlive()) {
+                ret++;
+            }
+        }
+        return ret;
+    }
 }

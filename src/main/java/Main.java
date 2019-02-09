@@ -1,11 +1,17 @@
 import com.aerospike.client.AerospikeClient;
 import org.apache.commons.cli.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Main {
 
     private static String default_host = "localhost";
     private static String default_port = "3000";
     private static String default_namespace = "test";
+    private static String default_threads = "2";
+    private static String default_method = "write";
+    private static String default_batch_size = "1000";
 
     public static void main(String[] args) {
 
@@ -20,6 +26,18 @@ public class Main {
         Option onamespace = new Option("n", "namespace", true, "aerospike namespace");
         options.addOption(onamespace);
 
+        Option othread = new Option("t", "threads", true, "number of threads");
+        options.addOption(othread);
+
+        Option omethod = new Option("m", "method", true, "method (write|read|batchread)");
+        options.addOption(omethod);
+
+        Option obatch = new Option("bs", "batch_size", true, "batch size");
+        options.addOption(obatch);
+
+        Option oramndom_max = new Option("rm", "random_max", true, "max value for random numbers");
+        options.addOption(oramndom_max);
+
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -30,6 +48,11 @@ public class Main {
             String host = cmd.getOptionValue("host");
             String port = cmd.getOptionValue("output");
             String namespace = cmd.getOptionValue("namespace");
+            String threads = cmd.getOptionValue("threads");
+            String method = cmd.getOptionValue("method");
+            String random_max = cmd.getOptionValue("random_max");
+            int random_max_n = -1;
+            String batch_zise = cmd.getOptionValue("batch_size");
 
             if (host == null) {
                 System.out.println("host is empty, use default: " + default_host);
@@ -43,24 +66,62 @@ public class Main {
                 System.out.println("namespace is empty, use default: " + default_namespace);
                 namespace = default_namespace;
             }
+            if (threads == null) {
+                System.out.println("threads is empty, use default: " + default_threads);
+                threads = default_threads;
+            }
+            if (method == null) {
+                System.out.println("method is empty, use default: " + default_method);
+                method = default_method;
+            }
+            if (!method.equals("read") && !method.equals("write") &&!method.equals("batchread"))
+                throw new ParseException("invalid method option");
+            if (random_max != null) {
+                random_max_n = Integer.parseInt(random_max);
+            }
+            if (batch_zise == null) {
+                System.out.println("batch_size is empty, use default: " + default_batch_size);
+                batch_zise = default_batch_size;
+            }
 
             AerospikeClient client = new AerospikeClient(host, Integer.parseInt(port));
 
-            TestSimpleThread thread1 = new TestSimpleThread(client, namespace);
-            TestSimpleThread thread2 = new TestSimpleThread(client, namespace);
-            TestSimpleThread thread3 = new TestSimpleThread(client, namespace);
-            thread1.start();
-            thread2.start();
-            thread3.start();
+            List<TestSimpleThread> computeThreads = new ArrayList<TestSimpleThread>();
+            for (int i = 0; i <= Integer.parseInt(threads); i++) {
+                TestSimpleThread thread = new TestSimpleThread(client, namespace, method, random_max_n,
+                        Integer.parseInt(batch_zise));
+                computeThreads.add(thread);
+                thread.start();
+            }
+
+            TotalStatThread statThread = new TotalStatThread(computeThreads);
+            statThread.start();
+
+            for (TestSimpleThread thread : computeThreads) {
+                try {
+                    thread.join();
+                }
+                catch (InterruptedException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
 
             try {
-                thread1.join();
-                thread2.join();
-                thread3.join();
+                statThread.join();
             }
             catch (InterruptedException e) {
                 System.out.println(e.getMessage());
             }
+
+            long totalRows = 0;
+            long totalHits = 0;
+            for (TestSimpleThread thread : computeThreads) {
+                totalRows += thread.getTotatRows();
+                totalHits += thread.getTotalHits();
+            }
+            System.out.println("");
+            System.out.println("Total rows: " + totalRows);
+            System.out.println("Total hits: " + totalHits);
 
             client.close();
         } catch (ParseException e) {
