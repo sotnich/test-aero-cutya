@@ -7,16 +7,35 @@ import com.aerospike.client.Record;
 
 import java.util.ArrayList;
 
-public class CutAeroTable {
+public class CutTable {
 
     private String m_tableName;
     private AerospikeClient m_client;
     private String m_namespace;
 
-    public CutAeroTable(String tableName, AerospikeClient client, String namespace) {
+    public CutTable(String tableName, AerospikeClient client, String namespace) {
         m_tableName = tableName;
         m_namespace = namespace;
         m_client = client;
+    }
+
+    public ArrayList<String> lookup(String prmName, ArrayList<String> prmKeys, String secName) {
+        Key[] keys = new Key[prmKeys.size()];
+        for(int i = 0; i < prmKeys.size(); i++)
+            keys[i] = new Key(m_namespace, m_tableName, getKeyVal(prmName, prmKeys.get(i)));
+        Record[] records = m_client.get(null, keys, secName);
+
+        ArrayList<String> ret = new ArrayList<String>();
+        for (Record record : records) {
+            if (record != null) {
+                ArrayList<String> newKeys = (ArrayList<String>) record.getValue(secName);
+                for (String key : newKeys) {
+                    if (!ret.contains(key))
+                        ret.add(key);
+                }
+            }
+        }
+        return ret;
     }
 
     public void putSecondaryKey(String prmName, String prmVal, String secName, String secKey) {
@@ -39,7 +58,7 @@ public class CutAeroTable {
     }
 
     public ArrayList<String> getSecondaryKeys(String prmName, String prmValue, String secName) {
-        Record record = m_client.get(null, getKey(prmName, prmValue));
+        Record record = m_client.get(null, getKey(prmName, prmValue), secName);
         if (record == null)
             return new ArrayList<String>();
         else
@@ -54,7 +73,11 @@ public class CutAeroTable {
         else return keyName;
     }
 
+    private String getKeyVal(String prmName, String prmVal) {
+        return getShortKeyName(prmName)+prmVal;
+    }
+
     private Key getKey(String prmName, String prmVal) {
-        return new Key(m_namespace, m_tableName, getShortKeyName(prmName)+prmVal);
+        return new Key(m_namespace, m_tableName, getKeyVal(prmName, prmVal));
     }
 }

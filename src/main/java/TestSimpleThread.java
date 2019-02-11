@@ -5,12 +5,11 @@ import com.aerospike.client.Record;
 import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.RecordSet;
 import com.aerospike.client.query.Statement;
-import tinkoff.dwh.cut.CutAeroTable;
+import tinkoff.dwh.cut.CutTable;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestSimpleThread extends Thread {
 
@@ -21,7 +20,7 @@ public class TestSimpleThread extends Thread {
     private int m_randomMax;
     private int m_batchSize;
     private int m_seconds;
-    private CutAeroTable m_installmentTable;
+    private CutTable m_installmentTable;
 
     private long m_current_rows_per_sec = 0;        // Тукущая производительность строк в секунду
     private long m_total_rows = 0;                  // Общее кол-во обработанных строк
@@ -36,7 +35,7 @@ public class TestSimpleThread extends Thread {
         m_randomMax = ramdomMax;
         m_batchSize = batchSize;
         m_seconds = seconds;
-        m_installmentTable = new CutAeroTable("installment", m_client, m_namespace);
+        m_installmentTable = new CutTable("installment", m_client, m_namespace);
     }
 
     public void run() {
