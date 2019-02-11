@@ -2,6 +2,10 @@ import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.Record;
+import com.aerospike.client.query.Filter;
+import com.aerospike.client.query.RecordSet;
+import com.aerospike.client.query.Statement;
+import tinkoff.dwh.cut.CutAeroTable;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,6 +20,8 @@ public class TestSimpleThread extends Thread {
     private String m_method;
     private int m_randomMax;
     private int m_batchSize;
+    private int m_seconds;
+    private CutAeroTable m_installmentTable;
 
     private long m_current_rows_per_sec = 0;        // Тукущая производительность строк в секунду
     private long m_total_rows = 0;                  // Общее кол-во обработанных строк
@@ -23,16 +29,18 @@ public class TestSimpleThread extends Thread {
 
     private final int m_intervalMillis = 1000;      // Интеравал замера в миллисекундах
 
-    TestSimpleThread(AerospikeClient client, String namespace, String method, int ramdomMax, int batchSize) {
+    TestSimpleThread(AerospikeClient client, String namespace, String method, int ramdomMax, int batchSize, int seconds) {
         m_client = client;
         m_namespace = namespace;
         m_method = method;
         m_randomMax = ramdomMax;
         m_batchSize = batchSize;
+        m_seconds = seconds;
+        m_installmentTable = new CutAeroTable("installment", m_client, m_namespace);
     }
 
     public void run() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < m_seconds; i++) {
             runOnce();
         }
         m_current_rows_per_sec = 0;
@@ -60,6 +68,12 @@ public class TestSimpleThread extends Thread {
         }
         else if (m_method.equals("batchread")) {
             return executeBatchRead();
+        }
+        else if (m_method.equals("indexread")) {
+            return executeReadByIndex();
+        }
+        else if (m_method.equals("writetable")) {
+            return executeWriteTable();
         }
         else return 0;
     }
@@ -102,6 +116,44 @@ public class TestSimpleThread extends Thread {
         m_client.put(null, key, bin1);
         m_total_rows++;
         return 1;
+    }
+
+    private long executeWriteTable() {
+        m_installmentTable.putSecondaryKey("account_rk", String.valueOf(getRandom()),
+                "installment_rk", String.valueOf(getRandom()));
+        m_total_hits++;
+        m_total_rows++;
+        return 1;
+    }
+
+    private long executeReadByIndex() {
+        Statement stmt = new Statement();
+        stmt.setNamespace(m_namespace);
+        stmt.setSetName("demo");
+        stmt.setFilter(Filter.equal("bin1", getRandom()));
+//        stmt.setFilter(Filter.range("bin1", 0L, 100L));
+        stmt.setBinNames("bin1");
+
+        RecordSet rs = m_client.query(null, stmt);
+
+        int rows = 0;
+        try {
+            while (rs.next()) {
+                Key key = rs.getKey();
+                Record record = rs.getRecord();
+                m_total_hits++;
+                m_total_rows++;
+                rows++;
+            }
+        }
+        finally {
+            rs.close();
+        }
+
+        m_total_hits = rows;
+        rows = Math.max(rows, 1);
+        m_total_rows += rows;
+        return rows;
     }
 
     static String formatDate(long millis) {

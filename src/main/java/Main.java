@@ -12,6 +12,7 @@ public class Main {
     private static String default_threads = "2";
     private static String default_method = "write";
     private static String default_batch_size = "1000";
+    private static String default_seconds = "10";
 
     public static void main(String[] args) {
 
@@ -29,8 +30,11 @@ public class Main {
         Option othread = new Option("t", "threads", true, "number of threads");
         options.addOption(othread);
 
-        Option omethod = new Option("m", "method", true, "method (write|read|batchread)");
+        Option omethod = new Option("m", "method", true, "method (write|read|batchread|indexread|writetable)");
         options.addOption(omethod);
+
+        Option otime = new Option("s", "seconds", true, "seconds to run");
+        options.addOption(otime);
 
         Option obatch = new Option("bs", "batch_size", true, "batch size");
         options.addOption(obatch);
@@ -53,6 +57,7 @@ public class Main {
             String random_max = cmd.getOptionValue("random_max");
             int random_max_n = -1;
             String batch_zise = cmd.getOptionValue("batch_size");
+            String seconds = cmd.getOptionValue("seconds");
 
             if (host == null) {
                 System.out.println("host is empty, use default: " + default_host);
@@ -74,7 +79,8 @@ public class Main {
                 System.out.println("method is empty, use default: " + default_method);
                 method = default_method;
             }
-            if (!method.equals("read") && !method.equals("write") &&!method.equals("batchread"))
+            if (!method.equals("read") && !method.equals("write") && !method.equals("batchread")
+                    && !method.equals("indexread") && !method.equals("writetable"))
                 throw new ParseException("invalid method option");
             if (random_max != null) {
                 random_max_n = Integer.parseInt(random_max);
@@ -83,13 +89,17 @@ public class Main {
                 System.out.println("batch_size is empty, use default: " + default_batch_size);
                 batch_zise = default_batch_size;
             }
+            if (seconds == null) {
+                System.out.println("seconds is empty, use default: " + default_seconds);
+                seconds = default_seconds;
+            }
 
             AerospikeClient client = new AerospikeClient(host, Integer.parseInt(port));
 
             List<TestSimpleThread> computeThreads = new ArrayList<TestSimpleThread>();
             for (int i = 0; i <= Integer.parseInt(threads); i++) {
                 TestSimpleThread thread = new TestSimpleThread(client, namespace, method, random_max_n,
-                        Integer.parseInt(batch_zise));
+                        Integer.parseInt(batch_zise), Integer.parseInt(seconds));
                 computeThreads.add(thread);
                 thread.start();
             }
