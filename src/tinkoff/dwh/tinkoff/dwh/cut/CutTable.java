@@ -6,6 +6,7 @@ import com.aerospike.client.Key;
 import com.aerospike.client.Record;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class CutTable {
 
@@ -13,10 +14,13 @@ public class CutTable {
     private AerospikeClient m_client;
     private String m_namespace;
 
-    public CutTable(String tableName, AerospikeClient client, String namespace) {
+    private ArrayList<String> m_columnNames = new ArrayList<String>();        // Названия колонок с ключами
+
+    public CutTable(String tableName, AerospikeClient client, String namespace, ArrayList<String> columnNames) {
         m_tableName = tableName;
         m_namespace = namespace;
         m_client = client;
+        m_columnNames = columnNames;
     }
 
     public ArrayList<String> lookup(String prmName, ArrayList<String> prmKeys, String secName) {
@@ -65,6 +69,33 @@ public class CutTable {
             return (ArrayList<String>) record.getValue(secName);
     }
 
+    // TODO: если несколько вторичных ключей, то придется несколько раз вызывать эту функцию для каждого вторичного ключа
+    // TODO: По идее можно сделать чтобы можно было возвращать несколько списков ключей в return и вызывать один раз
+    public ArrayList<String> getSecondaryKeys(String prmName, ArrayList<String> prmValues, String secName) {
+
+        // Дедубликация
+        ArrayList<String> prmValuesD = new ArrayList<String>(new HashSet<String>(prmValues));
+
+        Key [] keys = new Key[prmValuesD.size()];
+        for (int i = 0; i < prmValuesD.size(); i++) {
+            keys[i] = getKey(prmName, prmValuesD.get(i));
+        }
+
+        Record [] records = m_client.get(null, keys, secName);
+        ArrayList<String> ret = new ArrayList<String>();
+
+        for (Record record : records) {
+            if (record != null)
+                for (String secKey : (ArrayList<String>)record.getValue(secName)) {
+                    if (!ret.contains(secKey)) {
+                        ret.add(secKey);
+                    }
+                }
+        }
+
+        return ret;
+    }
+
     private String getShortKeyName(String keyName) {
         if (keyName.equals("account_rk"))
             return "ACCN";
@@ -79,5 +110,9 @@ public class CutTable {
 
     private Key getKey(String prmName, String prmVal) {
         return new Key(m_namespace, m_tableName, getKeyVal(prmName, prmVal));
+    }
+
+    public ArrayList<String> getColumnNames() {
+        return m_columnNames;
     }
 }

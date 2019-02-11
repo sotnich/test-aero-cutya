@@ -36,6 +36,7 @@ public class TestSimpleThread extends Thread {
         m_batchSize = batchSize;
         m_seconds = seconds;
         m_installmentTable = new CutTable("installment", m_client, m_namespace);
+        m_installmentTable = new CutAeroTable("installment", m_client, m_namespace, null);
     }
 
     public void run() {
