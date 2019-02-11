@@ -7,8 +7,8 @@ import java.util.ArrayList;
 public class TestTables {
 
     public static void main(String[] args) {
-//        AerospikeClient client = new AerospikeClient("178.128.134.224", 3000);
-        AerospikeClient client = new AerospikeClient("10.216.193.85", 3000);
+        AerospikeClient client = new AerospikeClient("178.128.134.224", 3000);
+//        AerospikeClient client = new AerospikeClient("10.216.193.85", 3000);
 
         testLookup(client);
 
@@ -16,7 +16,10 @@ public class TestTables {
     }
 
     public static void testLookup(AerospikeClient client) {
-        CutTable installment = new CutTable("installment", client, "bar");
+        ArrayList<String> installmentColumns = new ArrayList<String>();
+        installmentColumns.add("account_rk");
+        installmentColumns.add("installment_rk");
+        CutLinkTable installment = new CutLinkTable("installment", client, "bar", installmentColumns);
 
         installment.putSecondaryKey("account_rk", "101", "installment_rk", "201");
         installment.putSecondaryKey("account_rk", "101", "installment_rk", "202");
@@ -36,7 +39,7 @@ public class TestTables {
     }
 
     public static void test(AerospikeClient client) {
-        CutTable installment = new CutTable("installment", client, "bar");
+        CutLinkTable installment = new CutLinkTable("installment", client, "bar", null);
         installment.putSecondaryKey("account_rk", "234", "installment_rk", "455");
 
         ArrayList<String> res = installment.getSecondaryKeys("account_rk", "123", "installment_rk");

@@ -11,9 +11,9 @@ public class CutJobInstance {
     private String m_aerospikeNamespace;
     private String m_jobName;
     private CutEngine m_cutEngine;
-    private Map<String, Set<String>> m_keys = new HashMap<String, Set<String>>();       // Ключи которые копим
-    private Set<String> m_processedJobs = new HashSet<String>();                        // Список Job'ов которые отдали свои данные и эти данные уже обработали здесь
-    private ArrayList<CutAeroTable> m_cutLinkTables = new ArrayList<CutAeroTable>();    // Таблицы связки ключей друг с другом
+    private Map<String, Set<String>> m_keys = new HashMap<String, Set<String>>();                     // Ключи которые копим
+    private Set<String> m_processedJobs = new HashSet<String>();                         // Список Job'ов которые отдали свои данные и эти данные уже обработали здесь
+    private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();        // Таблицы связки ключей друг с другом
 
     public CutJobInstance(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
         m_jobName = jobName;
@@ -45,7 +45,7 @@ public class CutJobInstance {
         // И только для таблиц с более одной колонкой создаем привязываем таблицу связку в Aerospike
         for (String tableName : tableXColumns.keySet()) {
             if (tableXColumns.get(tableName).size() > 1)
-                m_cutLinkTables.add(new CutAeroTable(tableName, m_client, m_aerospikeNamespace, tableXColumns.get(tableName)));
+                m_cutLinkTables.add(new CutLinkTable(tableName, m_client, m_aerospikeNamespace, tableXColumns.get(tableName)));
         }
     }
 
@@ -91,7 +91,7 @@ public class CutJobInstance {
 
         // Для каждой таблицы связок ищем, есть ли в ней наша колонка
         // Для такой таблицы, запускаем рекурсивный поиск вторичных ключей
-        for (CutAeroTable linkTable : m_cutLinkTables) {
+        for (CutLinkTable linkTable : m_cutLinkTables) {
             if (linkTable.getColumnNames().contains(columnName)) {
                 for (String secColumnName : linkTable.getColumnNames()) {
                     if (!columnName.equals(secColumnName)) {

@@ -8,7 +8,7 @@ import com.aerospike.client.Record;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class CutTable {
+public class CutLinkTable {
 
     private String m_tableName;
     private AerospikeClient m_client;
@@ -16,7 +16,7 @@ public class CutTable {
 
     private ArrayList<String> m_columnNames = new ArrayList<String>();        // Названия колонок с ключами
 
-    public CutTable(String tableName, AerospikeClient client, String namespace, ArrayList<String> columnNames) {
+    public CutLinkTable(String tableName, AerospikeClient client, String namespace, ArrayList<String> columnNames) {
         m_tableName = tableName;
         m_namespace = namespace;
         m_client = client;
