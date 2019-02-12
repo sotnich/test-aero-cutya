@@ -11,8 +11,8 @@ public class CutJobInstance {
     private String m_aerospikeNamespace;
     private String m_jobName;
     private CutEngine m_cutEngine;
-    private Map<String, Set<String>> m_keys = new HashMap<String, Set<String>>();                     // Ключи которые копим
-    private Set<String> m_processedJobs = new HashSet<String>();                         // Список Job'ов которые отдали свои данные и эти данные уже обработали здесь
+    private Map<String, Set<String>> m_keys = new HashMap<String, Set<String>>();           // Ключи которые копим
+    private Set<String> m_processedJobs = new HashSet<String>();                            // Список Job'ов которые отдали свои данные и эти данные уже обработали здесь
     private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();        // Таблицы связки ключей друг с другом
 
     public CutJobInstance(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
@@ -22,7 +22,7 @@ public class CutJobInstance {
         m_aerospikeNamespace = aerospikeNamespace;
 
         // Из метаданных понимаем какие ключи нужно копить и для них создаем пустые массивы, куда будем записывать новые ключи
-        for (CutEngine.TableRelation tr : m_cutEngine.getJobRelations(jobName)) {
+        for (TableRelation tr : m_cutEngine.getJobRelations(jobName)) {
             if (!m_keys.containsKey(tr.m_keyFrom))
                 m_keys.put(tr.m_keyFrom, new HashSet<String>());
             if (!m_keys.containsKey(tr.m_keyTo))
@@ -34,11 +34,11 @@ public class CutJobInstance {
 
     private void initCutTables() {
         HashMap<String, ArrayList<String>> tableXColumns = new HashMap<String, ArrayList<String>>();    // Какие вообще есть таблицы и с какими полями
-        for (CutEngine.TableRelation r : m_cutEngine.getJobRelations(m_jobName)) {
+        for (TableRelation r : m_cutEngine.getJobRelations(m_jobName)) {
             if (!tableXColumns.containsKey(r.m_tableFrom)) tableXColumns.put(r.m_tableFrom, new ArrayList<String>());
-            tableXColumns.get(r.m_tableFrom).add(r.m_keyFrom);
+            if (!tableXColumns.get(r.m_tableFrom).contains(r.m_keyFrom)) tableXColumns.get(r.m_tableFrom).add(r.m_keyFrom);
             if (!tableXColumns.containsKey(r.m_tableTo)) tableXColumns.put(r.m_tableTo, new ArrayList<String>());
-            tableXColumns.get(r.m_tableTo).add(r.m_keyTo);
+            if (!tableXColumns.get(r.m_tableTo).contains(r.m_keyTo)) tableXColumns.get(r.m_tableTo).add(r.m_keyTo);
         }
 
         // Пробегаемся по всем таблицам
@@ -100,5 +100,9 @@ public class CutJobInstance {
                 }
             }
         }
+    }
+
+    public ArrayList<CutLinkTable> getCutLinkTables() {
+        return m_cutLinkTables;
     }
 }

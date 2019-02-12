@@ -115,4 +115,8 @@ public class CutLinkTable {
     public ArrayList<String> getColumnNames() {
         return m_columnNames;
     }
+
+    public String getTableName() {
+        return m_tableName;
+    }
 }

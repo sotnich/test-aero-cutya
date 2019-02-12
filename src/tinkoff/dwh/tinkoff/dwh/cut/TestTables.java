@@ -10,33 +10,9 @@ public class TestTables {
         AerospikeClient client = new AerospikeClient("178.128.134.224", 3000);
 //        AerospikeClient client = new AerospikeClient("10.216.193.85", 3000);
 
-        testLookup(client);
-
         client.close();
     }
 
-    public static void testLookup(AerospikeClient client) {
-        ArrayList<String> installmentColumns = new ArrayList<String>();
-        installmentColumns.add("account_rk");
-        installmentColumns.add("installment_rk");
-        CutLinkTable installment = new CutLinkTable("installment", client, "bar", installmentColumns);
-
-        installment.putSecondaryKey("account_rk", "101", "installment_rk", "201");
-        installment.putSecondaryKey("account_rk", "101", "installment_rk", "202");
-        installment.putSecondaryKey("account_rk", "102", "installment_rk", "201");
-        installment.putSecondaryKey("account_rk", "102", "installment_rk", "202");
-        installment.putSecondaryKey("account_rk", "102", "installment_rk", "203");
-        installment.putSecondaryKey("account_rk", "103", "installment_rk", "204");
-        installment.putSecondaryKey("account_rk", "100", "installment_rk", "210");
-
-        ArrayList<String> prmKeys = new ArrayList<String>();
-        prmKeys.add("101");
-        prmKeys.add("102");
-        prmKeys.add("103");
-        prmKeys.add("104");
-        ArrayList<String> res = installment.lookup("account_rk", prmKeys, "installment_rk");
-        System.out.println(res);
-    }
 
     public static void test(AerospikeClient client) {
         CutLinkTable installment = new CutLinkTable("installment", client, "bar", null);
