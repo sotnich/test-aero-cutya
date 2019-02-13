@@ -11,8 +11,8 @@ public class CutJobInstance {
     private String m_aerospikeNamespace;
     private String m_jobName;
     private CutEngine m_cutEngine;
-    private Map<String, Set<String>> m_keys = new HashMap<String, Set<String>>();           // Ключи которые копим
-    private Set<String> m_processedJobs = new HashSet<String>();                            // Список Job'ов которые отдали свои данные и эти данные уже обработали здесь
+    private HashMap<String, Set<String>> m_keys = new HashMap<String, Set<String>>();              // Ключи которые копим
+    private Set<String> m_processedTables = new HashSet<String>();               // Список входных таблиц которые отдали свои данные и эти данные уже обработали здесь
     private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();        // Таблицы связки ключей друг с другом
 
     public CutJobInstance(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
@@ -49,54 +49,62 @@ public class CutJobInstance {
         }
     }
 
-    // Добавить очередной инкремент
-    public void putNextTableInc(String parJobName, String tableName, ArrayList<String> columnNames, ArrayList<ArrayList<String>> rows) {
-
-        // Добавляем новые связи
-        // А заодно формируем списки новых ключей (транспонировкой rows)
-        ArrayList<ArrayList<String>> columns = new ArrayList<ArrayList<String>>();
-        for (int i = 0; i < columnNames.size(); i++) {
-            columns.add(new ArrayList<String>());
-        }
-        for (ArrayList<String> row : rows) {
-
-            // TODO: добавить добавление новых связей напрямую в Aerospike
-
-            // Транспонируем rows в columns
-            for (int i = 0; i < columnNames.size(); i++) {
-                columns.get(i).add(row.get(i));
-            }
-        }
-
-        // Добавляем новые ключи из инкремента (рекурсивно)
-        for (int i = 0; i < columnNames.size(); i++) {
-            addNewKeys(tableName, columnNames.get(i), columns.get(i));
-        }
-
-        m_processedJobs.add(parJobName);
+    private void addNewLinks(ArrayList<String> columnNames, ArrayList<ArrayList<String>> rows) {
+        // TODO: добавить добавление новых связей напрямую в Aerospike
     }
 
-    // Добавить новые ключи
-    public void addNewKeys(String tableName, String columnName, ArrayList<String> keys) {
+    // Добавить очередной инкремент
+    public void putNextTableInc(String tableName, ArrayList<String> columnNames, ArrayList<ArrayList<String>> rows) {
 
-        ArrayList<String> newKeys = new ArrayList<String>();    // Действительно новые ключи (которых раньше не было)
+        addNewLinks(columnNames, rows);
 
-        // Добавляем ключи и формируем список действительно новых ключей
-        for (String key : keys) {
-            if (!m_keys.get(columnName).contains(key)) {
-                newKeys.add(key);
-                m_keys.get(columnName).add(key);
+        // Транспонируем ключи (+убираем из них дубли)
+        HashMap<String, ArrayList<String>> keys = new HashMap<String, ArrayList<String>>();
+        for (int i = 0; i < columnNames.size(); i++) {
+            String columnName = columnNames.get(i);
+            keys.put(columnName, new ArrayList<String>());
+            for (ArrayList<String> row : rows) {
+                String key = row.get(i);
+                if (!m_keys.get(columnName).contains(key))
+                    keys.get(columnName).add(key);
             }
         }
+
+        for (String columnName : keys.keySet()) {
+            addNewKeys(columnName, keys.get(columnName));
+        }
+
+        m_processedTables.add(tableName);
+    }
+
+    // Вернуть из списка ключей те, которых еще нет в массиве накапливаемых ключей
+    private ArrayList<String> findRealNewKeys(String columnName, ArrayList<String> keys) {
+        Set<String> existKeys = m_keys.get(columnName);
+        ArrayList<String> ret = new ArrayList<String>();
+        for (String key : keys) {
+            if (!existKeys.contains(key))
+                ret.add(key);
+        }
+        return ret;
+    }
+
+    // Добавить новые ключи реукрсивно с учетом поиска в таблицах связей
+    public void addNewKeys(String columnName, ArrayList<String> keys) {
+
+        if (keys.size() == 0) return;
+
+        ArrayList<String> newKeys = findRealNewKeys(columnName, keys);
+        m_keys.get(columnName).addAll(newKeys);
 
         // Для каждой таблицы связок ищем, есть ли в ней наша колонка
         // Для такой таблицы, запускаем рекурсивный поиск вторичных ключей
         for (CutLinkTable linkTable : m_cutLinkTables) {
-            if (linkTable.getColumnNames().contains(columnName)) {
-                for (String secColumnName : linkTable.getColumnNames()) {
-                    if (!columnName.equals(secColumnName)) {
-                        ArrayList<String> secKeys = linkTable.getSecondaryKeys(columnName, keys, secColumnName);
-                    }
+            ArrayList<String> linkColumns = new ArrayList<String>(linkTable.getColumnNames());
+            if (linkColumns.contains(columnName)) {
+                linkColumns.remove(columnName);
+                for (String secColumnName : linkColumns) {
+                    ArrayList<String> secKeys = linkTable.getSecondaryKeys(columnName, keys, secColumnName);
+                    addNewKeys(secColumnName, secKeys);
                 }
             }
         }
@@ -104,5 +112,9 @@ public class CutJobInstance {
 
     public ArrayList<CutLinkTable> getCutLinkTables() {
         return m_cutLinkTables;
+    }
+
+    public HashMap<String, Set<String>> getKeys() {
+        return m_keys;
     }
 }

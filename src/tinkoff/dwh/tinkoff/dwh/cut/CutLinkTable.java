@@ -23,23 +23,16 @@ public class CutLinkTable {
         m_columnNames = columnNames;
     }
 
-    public ArrayList<String> lookup(String prmName, ArrayList<String> prmKeys, String secName) {
-        Key[] keys = new Key[prmKeys.size()];
-        for(int i = 0; i < prmKeys.size(); i++)
-            keys[i] = new Key(m_namespace, m_tableName, getKeyVal(prmName, prmKeys.get(i)));
-        Record[] records = m_client.get(null, keys, secName);
+    public void deleteSecondaryKey(String prmName, String prmVal, String secName, String secKey) {
+        ArrayList<String> alreadyKeys = getSecondaryKeys(prmName, prmVal, secName);
+        if (!alreadyKeys.contains(secKey)) return;
 
-        ArrayList<String> ret = new ArrayList<String>();
-        for (Record record : records) {
-            if (record != null) {
-                ArrayList<String> newKeys = (ArrayList<String>) record.getValue(secName);
-                for (String key : newKeys) {
-                    if (!ret.contains(key))
-                        ret.add(key);
-                }
-            }
-        }
-        return ret;
+        alreadyKeys.remove(secKey);
+
+        ArrayList<String> newKeys = new ArrayList<String>(alreadyKeys);
+
+        Bin secBin = new Bin(secName, alreadyKeys);
+        m_client.put(null, getKey(prmName, prmVal), secBin);
     }
 
     public void putSecondaryKey(String prmName, String prmVal, String secName, String secKey) {

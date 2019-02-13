@@ -5,10 +5,7 @@ import tinkoff.dwh.cut.CutJobInstance;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.TableRelation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestCutJobInstance extends BaseTest {
 
@@ -62,7 +59,7 @@ public class TestCutJobInstance extends BaseTest {
     }
 
     @Test
-    public void testPutNextTableInc() {
+    public void testPutNextTableInc_financial_account_chng() {
         CutJobInstance job = new CutJobInstance(m_client, m_testNamespace, m_jobName, m_cutEngine);
         CutLinkTable installment = job.getCutLinkTables().get(0);
 
@@ -82,12 +79,26 @@ public class TestCutJobInstance extends BaseTest {
         rows.add(row01);
         ArrayList<String> row02 = new ArrayList<String>();
         row02.add("101");
-        rows.add(row01);
+        rows.add(row02);
         ArrayList<String> row03 = new ArrayList<String>();
         row03.add("101");
-        rows.add(row01);
-        rows.add(row01);
+        rows.add(row03);
 
-        job.putNextTableInc(m_jobName, "prod_dds.financial_account_chng", columnNames, rows);
+        job.putNextTableInc("prod_dds.financial_account_chng", columnNames, rows);
+
+        HashMap<String, Set<String>> keys = job.getKeys();
+
+        Assert.assertEquals(keys.size(), 2);     // Два массива ключей
+        Assert.assertTrue(keys.containsKey("account_rk"));
+        Assert.assertTrue(keys.containsKey("installment_rk"));
+
+        String [] etalonAccs = {"111", "101"};
+        String [] etalonInts = {"201", "202"};
+
+        Assert.assertTrue(keys.get("account_rk").contains(etalonAccs[0]));
+        Assert.assertTrue(keys.get("account_rk").contains(etalonAccs[1]));
+
+        Assert.assertTrue(keys.get("installment_rk").contains(etalonInts[0]));
+        Assert.assertTrue(keys.get("installment_rk").contains(etalonInts[1]));
     }
 }

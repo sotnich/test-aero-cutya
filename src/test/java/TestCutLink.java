@@ -16,6 +16,11 @@ public class TestCutLink extends BaseTest {
         installmentColumns.add("installment_rk");
         m_installment = new CutLinkTable("installment", m_client, m_testNamespace, installmentColumns);
 
+
+    }
+
+    @Test
+    public void testGetSecondaryKeys() {
         m_installment.putSecondaryKey("account_rk", "100", "installment_rk", "210");
         m_installment.putSecondaryKey("account_rk", "101", "installment_rk", "201");
         m_installment.putSecondaryKey("account_rk", "101", "installment_rk", "202");
@@ -23,10 +28,7 @@ public class TestCutLink extends BaseTest {
         m_installment.putSecondaryKey("account_rk", "102", "installment_rk", "202");
         m_installment.putSecondaryKey("account_rk", "102", "installment_rk", "203");
         m_installment.putSecondaryKey("account_rk", "103", "installment_rk", "204");
-    }
 
-    @Test
-    public void testGetSecondaryKeys() {
         ArrayList<String> prmKeys = new ArrayList<String>();
         prmKeys.add("101");
         prmKeys.add("102");
