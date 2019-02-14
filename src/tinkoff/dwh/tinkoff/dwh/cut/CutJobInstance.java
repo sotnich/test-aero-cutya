@@ -11,9 +11,9 @@ public class CutJobInstance {
     private String m_aerospikeNamespace;
     private String m_jobName;
     private CutEngine m_cutEngine;
-    private HashMap<String, Set<String>> m_keys = new HashMap<String, Set<String>>();              // Ключи которые копим
-    private Set<String> m_processedTables = new HashSet<String>();               // Список входных таблиц которые отдали свои данные и эти данные уже обработали здесь
-    private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();        // Таблицы связки ключей друг с другом
+    private HashMap<Column, Set<String>> m_keys = new HashMap<Column, Set<String>>();              // Ключи которые копим
+    private Set<String> m_processedTables = new HashSet<String>();                                      // Список входных таблиц которые отдали свои данные и эти данные уже обработали здесь
+    private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();                        // Таблицы связки ключей друг с другом
 
     public CutJobInstance(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
         m_jobName = jobName;
@@ -23,10 +23,11 @@ public class CutJobInstance {
 
         // Из метаданных понимаем какие ключи нужно копить и для них создаем пустые массивы, куда будем записывать новые ключи
         for (TableRelation tr : m_cutEngine.getJobRelations(jobName)) {
-            if (!m_keys.containsKey(tr.m_keyFrom))
-                m_keys.put(tr.m_keyFrom, new HashSet<String>());
-            if (!m_keys.containsKey(tr.m_keyTo))
-                m_keys.put(tr.m_keyTo, new HashSet<String>());
+            Column [] columns = {tr.m_left, tr.m_right};
+            for(Column column : columns) {
+                if (!m_keys.containsKey(column))
+                    m_keys.put(column, new HashSet<String>());
+            }
         }
 
         initCutTables();
@@ -95,6 +96,10 @@ public class CutJobInstance {
 
         ArrayList<String> newKeys = findRealNewKeys(columnName, keys);
         m_keys.get(columnName).addAll(newKeys);
+
+        for (TableRelation tr : m_cutEngine.getJobRelations(m_jobName)) {
+            if (tr.)
+        }
 
         // Для каждой таблицы связок ищем, есть ли в ней наша колонка
         // Для такой таблицы, запускаем рекурсивный поиск вторичных ключей
