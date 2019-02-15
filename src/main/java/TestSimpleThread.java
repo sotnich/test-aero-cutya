@@ -35,7 +35,7 @@ public class TestSimpleThread extends Thread {
         m_randomMax = ramdomMax;
         m_batchSize = batchSize;
         m_seconds = seconds;
-        m_installmentTable = new CutLinkTable("installment", m_client, m_namespace, null);
+        m_installmentTable = new CutLinkTable(m_client, m_namespace, "installment");
     }
 
     public void run() {

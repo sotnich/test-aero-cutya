@@ -12,15 +12,4 @@ public class TestTables {
 
         client.close();
     }
-
-
-    public static void test(AerospikeClient client) {
-        CutLinkTable installment = new CutLinkTable("installment", client, "bar", null);
-        installment.putSecondaryKey("account_rk", "234", "installment_rk", "455");
-
-        ArrayList<String> res = installment.getSecondaryKeys("account_rk", "123", "installment_rk");
-        System.out.println(res);
-
-        client.close();
-    }
 }

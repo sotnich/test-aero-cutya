@@ -4,23 +4,26 @@ import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.Record;
+import tinkoff.dwh.cut.meta.Column;
+import tinkoff.dwh.cut.meta.Table;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+
+import static tinkoff.dwh.cut.meta.Column.copyColumnsButOne;
 
 public class CutLinkTable {
 
-    private String m_tableName;
     private AerospikeClient m_client;
     private String m_namespace;
+    private Table m_table;
 
-    private ArrayList<String> m_columnNames = new ArrayList<String>();        // Названия колонок с ключами
-
-    public CutLinkTable(String tableName, AerospikeClient client, String namespace, ArrayList<String> columnNames) {
-        m_tableName = tableName;
+    public CutLinkTable(AerospikeClient client, String namespace, Table table) {
+        m_table = table;
         m_namespace = namespace;
         m_client = client;
-        m_columnNames = columnNames;
     }
 
     public void deleteSecondaryKey(String prmName, String prmVal, String secName, String secKey) {
@@ -64,17 +67,22 @@ public class CutLinkTable {
 
     // TODO: если несколько вторичных ключей, то придется несколько раз вызывать эту функцию для каждого вторичного ключа
     // TODO: По идее можно сделать чтобы можно было возвращать несколько списков ключей в return и вызывать один раз
-    public ArrayList<String> getSecondaryKeys(String prmName, ArrayList<String> prmValues, String secName) {
+    public ArrayList<String> getSecondaryKeys(Column prmColumn, ArrayList<String> prmValues) {
 
         // Дедубликация
         ArrayList<String> prmValuesD = new ArrayList<String>(new HashSet<String>(prmValues));
 
         Key [] keys = new Key[prmValuesD.size()];
         for (int i = 0; i < prmValuesD.size(); i++) {
-            keys[i] = getKey(prmName, prmValuesD.get(i));
+            keys[i] = getKey(prmColumn.getColumnName(), prmValuesD.get(i));
         }
 
-        Record [] records = m_client.get(null, keys, secName);
+        ArrayList<Column> secColumns = Column.copyColumnsButOne(m_table.getColumns(), prmColumn);
+        String [] secColumnNames = new String [secColumns.size()];
+        for (int i = 0; i < secColumns.size(); i++)
+            secColumnNames[i] = secColumns.get(i).getColumnName();
+
+        Record [] records = m_client.get(null, keys, secColumnNames);
         ArrayList<String> ret = new ArrayList<String>();
 
         for (Record record : records) {
@@ -102,14 +110,10 @@ public class CutLinkTable {
     }
 
     private Key getKey(String prmName, String prmVal) {
-        return new Key(m_namespace, m_tableName, getKeyVal(prmName, prmVal));
+        return new Key(m_namespace, m_table.getTableName(), getKeyVal(prmName, prmVal));
     }
 
-    public ArrayList<String> getColumnNames() {
-        return m_columnNames;
-    }
-
-    public String getTableName() {
-        return m_tableName;
+    public Table getTable() {
+        return m_table;
     }
 }

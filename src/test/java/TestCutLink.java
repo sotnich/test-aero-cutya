@@ -4,44 +4,27 @@ import org.junit.Test;
 import tinkoff.dwh.cut.CutLinkTable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class TestCutLink extends BaseTest {
 
-    private CutLinkTable m_installment;
-
-    public TestCutLink() {
-
-        ArrayList<String> installmentColumns = new ArrayList<String>();
-        installmentColumns.add("account_rk");
-        installmentColumns.add("installment_rk");
-        m_installment = new CutLinkTable("installment", m_client, m_testNamespace, installmentColumns);
-
-
-    }
-
     @Test
     public void testGetSecondaryKeys() {
-        m_installment.putSecondaryKey("account_rk", "100", "installment_rk", "210");
-        m_installment.putSecondaryKey("account_rk", "101", "installment_rk", "201");
-        m_installment.putSecondaryKey("account_rk", "101", "installment_rk", "202");
-        m_installment.putSecondaryKey("account_rk", "102", "installment_rk", "201");
-        m_installment.putSecondaryKey("account_rk", "102", "installment_rk", "202");
-        m_installment.putSecondaryKey("account_rk", "102", "installment_rk", "203");
-        m_installment.putSecondaryKey("account_rk", "103", "installment_rk", "204");
 
-        ArrayList<String> prmKeys = new ArrayList<String>();
-        prmKeys.add("101");
-        prmKeys.add("102");
-        prmKeys.add("103");
-        prmKeys.add("104");
+        CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace, "installment");
 
-        ArrayList<String> res = m_installment.getSecondaryKeys("account_rk", prmKeys, "installment_rk");
-        ArrayList<String> etalon = new ArrayList<String>();
-        etalon.add("201");
-        etalon.add("202");
-        etalon.add("203");
-        etalon.add("204");
+        installment.putSecondaryKey("account_rk", "100", "installment_rk", "210");
+        installment.putSecondaryKey("account_rk", "101", "installment_rk", "201");
+        installment.putSecondaryKey("account_rk", "101", "installment_rk", "202");
+        installment.putSecondaryKey("account_rk", "102", "installment_rk", "201");
+        installment.putSecondaryKey("account_rk", "102", "installment_rk", "202");
+        installment.putSecondaryKey("account_rk", "102", "installment_rk", "203");
+        installment.putSecondaryKey("account_rk", "103", "installment_rk", "204");
 
-        Assert.assertTrue(res.size() == etalon.size() && res.containsAll(etalon) && etalon.containsAll(res));
+        ArrayList<String> prmKeys = new ArrayList<String>(Arrays.asList("101", "102", "103", "104"));
+        ArrayList<String> res = installment.getSecondaryKeys("account_rk", prmKeys, "installment_rk");
+        ArrayList<String> etalon = new ArrayList<String>(Arrays.asList("201", "202", "203", "204"));
+
+        assertArrays(res, etalon);
     }
 }
