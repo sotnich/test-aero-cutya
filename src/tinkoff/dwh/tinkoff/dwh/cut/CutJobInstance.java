@@ -1,6 +1,7 @@
 package tinkoff.dwh.cut;
 
 import com.aerospike.client.AerospikeClient;
+import tinkoff.dwh.cut.meta.*;
 
 import java.util.*;
 
@@ -11,9 +12,10 @@ public class CutJobInstance {
     private String m_aerospikeNamespace;
     private String m_jobName;
     private CutEngine m_cutEngine;
-    private HashMap<Column, Set<String>> m_keys = new HashMap<Column, Set<String>>();              // Ключи которые копим
+    private HashMap<SingleKey, Set<String>> m_keys = new HashMap<SingleKey, Set<String>>();             // Ключи которые копим
     private Set<String> m_processedTables = new HashSet<String>();                                      // Список входных таблиц которые отдали свои данные и эти данные уже обработали здесь
-    private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();                        // Таблицы связки ключей друг с другом
+
+    private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();                    // Таблицы связки ключей друг с другом
 
     public CutJobInstance(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
         m_jobName = jobName;
@@ -22,31 +24,16 @@ public class CutJobInstance {
         m_aerospikeNamespace = aerospikeNamespace;
 
         // Из метаданных понимаем какие ключи нужно копить и для них создаем пустые массивы, куда будем записывать новые ключи
-        for (TableRelation tr : m_cutEngine.getJobRelations(jobName)) {
-            Column [] columns = {tr.m_left, tr.m_right};
-            for(Column column : columns) {
-                if (!m_keys.containsKey(column))
-                    m_keys.put(column, new HashSet<String>());
+        for (SingleKey singleKey : m_cutEngine.getJobRelations(m_jobName).getSingleKeys()) {
+            m_keys.put(singleKey, new HashSet<String>());
+        }
+
+        // Для таблиц с более одной колонкой создаем таблицу-связку в Aerospike
+        for (Table table : m_cutEngine.getJobRelations(m_jobName).getTables()) {
+            if (table.getColumns().size() > 1) {
+                m_cutLinkTables.add(new CutLinkTable(m_client, m_aerospikeNamespace, table));
             }
-        }
 
-        initCutTables();
-    }
-
-    private void initCutTables() {
-        HashMap<String, ArrayList<String>> tableXColumns = new HashMap<String, ArrayList<String>>();    // Какие вообще есть таблицы и с какими полями
-        for (TableRelation r : m_cutEngine.getJobRelations(m_jobName)) {
-            if (!tableXColumns.containsKey(r.m_tableFrom)) tableXColumns.put(r.m_tableFrom, new ArrayList<String>());
-            if (!tableXColumns.get(r.m_tableFrom).contains(r.m_keyFrom)) tableXColumns.get(r.m_tableFrom).add(r.m_keyFrom);
-            if (!tableXColumns.containsKey(r.m_tableTo)) tableXColumns.put(r.m_tableTo, new ArrayList<String>());
-            if (!tableXColumns.get(r.m_tableTo).contains(r.m_keyTo)) tableXColumns.get(r.m_tableTo).add(r.m_keyTo);
-        }
-
-        // Пробегаемся по всем таблицам
-        // И только для таблиц с более одной колонкой создаем привязываем таблицу связку в Aerospike
-        for (String tableName : tableXColumns.keySet()) {
-            if (tableXColumns.get(tableName).size() > 1)
-                m_cutLinkTables.add(new CutLinkTable(tableName, m_client, m_aerospikeNamespace, tableXColumns.get(tableName)));
         }
     }
 
@@ -66,44 +53,54 @@ public class CutJobInstance {
             keys.put(columnName, new ArrayList<String>());
             for (ArrayList<String> row : rows) {
                 String key = row.get(i);
-                if (!m_keys.get(columnName).contains(key))
+                if (!keys.get(columnName).contains(key))
                     keys.get(columnName).add(key);
             }
         }
 
         for (String columnName : keys.keySet()) {
-            addNewKeys(columnName, keys.get(columnName));
+            addNewKeys(new Column(tableName, columnName), keys.get(columnName));
         }
 
         m_processedTables.add(tableName);
     }
 
+
     // Вернуть из списка ключей те, которых еще нет в массиве накапливаемых ключей
-    private ArrayList<String> findRealNewKeys(String columnName, ArrayList<String> keys) {
-        Set<String> existKeys = m_keys.get(columnName);
+    private ArrayList<String> findRealNewKeys(Column column, ArrayList<String> keys) {
         ArrayList<String> ret = new ArrayList<String>();
         for (String key : keys) {
-            if (!existKeys.contains(key))
+            if (!getKeys(column).contains(key))
                 ret.add(key);
         }
         return ret;
     }
 
-    // Добавить новые ключи реукрсивно с учетом поиска в таблицах связей
-    public void addNewKeys(String columnName, ArrayList<String> keys) {
-
-        if (keys.size() == 0) return;
-
-        ArrayList<String> newKeys = findRealNewKeys(columnName, keys);
-        m_keys.get(columnName).addAll(newKeys);
-
-        for (TableRelation tr : m_cutEngine.getJobRelations(m_jobName)) {
-            if (tr.)
-        }
-
-        // Для каждой таблицы связок ищем, есть ли в ней наша колонка
-        // Для такой таблицы, запускаем рекурсивный поиск вторичных ключей
+    // Вернуть все таблицы-связки в которых есть заданная колонка
+    private ArrayList<CutLinkTable> getLinkTables(Column column) {
+        ArrayList<CutLinkTable> res = new ArrayList<CutLinkTable>();
         for (CutLinkTable linkTable : m_cutLinkTables) {
+            if (linkTable.getTable().getColumns().contains(column))
+                res.add(linkTable);
+        }
+        return res;
+    }
+
+    // Добавить новые ключи реукрсивно с учетом поиска в таблицах связей
+    public void addNewKeys(Column column, ArrayList<String> keys) {
+
+        if (keys.size() == 0) return;           // Нечего добавлять
+        if (getKeys(column) == null) return;    // Ключи по такому полю не копим - по сути ошибка
+
+        ArrayList<String> newKeys = findRealNewKeys(column, keys);
+        getKeys(column).addAll(newKeys);
+
+//        for (TableRelation tr : m_cutEngine.getJobRelations(m_jobName)) {
+//            if (tr.)
+//        }
+
+        // Для каждой таблицы с нашей колонкой запускаем рекурсивный поиск вторичных ключей
+        for (CutLinkTable linkTable : getLinkTables(column)) {
             ArrayList<String> linkColumns = new ArrayList<String>(linkTable.getColumnNames());
             if (linkColumns.contains(columnName)) {
                 linkColumns.remove(columnName);
@@ -119,7 +116,15 @@ public class CutJobInstance {
         return m_cutLinkTables;
     }
 
-    public HashMap<String, Set<String>> getKeys() {
+    public HashMap<SingleKey, Set<String>> getKeys() {
         return m_keys;
+    }
+
+    public Set<String> getKeys(Column column) {
+        for (SingleKey singleKey : m_keys.keySet()) {
+            if (singleKey.contains(column))
+                return m_keys.get(singleKey);
+        }
+        return null;
     }
 }
