@@ -14,7 +14,6 @@ public class CutJobInstance {
     private CutEngine m_cutEngine;
     private HashMap<SingleKey, Set<String>> m_keys = new HashMap<SingleKey, Set<String>>();             // Ключи которые копим
     private Set<String> m_processedTables = new HashSet<String>();                                      // Список входных таблиц которые отдали свои данные и эти данные уже обработали здесь
-
     private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();                    // Таблицы связки ключей друг с другом
 
     public CutJobInstance(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
@@ -33,7 +32,6 @@ public class CutJobInstance {
             if (table.getColumns().size() > 1) {
                 m_cutLinkTables.add(new CutLinkTable(m_client, m_aerospikeNamespace, table));
             }
-
         }
     }
 
@@ -100,16 +98,16 @@ public class CutJobInstance {
 //        }
 
         // Для каждой таблицы с нашей колонкой запускаем рекурсивный поиск вторичных ключей
-        for (CutLinkTable linkTable : getLinkTables(column)) {
-            ArrayList<String> linkColumns = new ArrayList<String>(linkTable.getColumnNames());
-            if (linkColumns.contains(columnName)) {
-                linkColumns.remove(columnName);
-                for (String secColumnName : linkColumns) {
-                    ArrayList<String> secKeys = linkTable.getSecondaryKeys(columnName, keys, secColumnName);
-                    addNewKeys(secColumnName, secKeys);
-                }
-            }
-        }
+//        for (CutLinkTable linkTable : getLinkTables(column)) {
+//            ArrayList<String> linkColumns = new ArrayList<String>(linkTable.getColumnNames());
+//            if (linkColumns.contains(columnName)) {
+//                linkColumns.remove(columnName);
+//                for (String secColumnName : linkColumns) {
+//                    ArrayList<String> secKeys = linkTable.getSecondaryKeys(columnName, keys, secColumnName);
+//                    addNewKeys(secColumnName, secKeys);
+//                }
+//            }
+//        }
     }
 
     public ArrayList<CutLinkTable> getCutLinkTables() {

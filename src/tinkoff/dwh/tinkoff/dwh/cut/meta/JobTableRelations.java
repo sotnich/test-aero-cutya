@@ -1,7 +1,5 @@
 package tinkoff.dwh.cut.meta;
 
-import javafx.scene.control.Tab;
-
 import java.util.ArrayList;
 
 public class JobTableRelations {

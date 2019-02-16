@@ -1,6 +1,7 @@
 package tinkoff.dwh.cut.meta;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Table {
     private String m_tableName;
@@ -10,10 +11,10 @@ public class Table {
         m_tableName = tableName;
     }
 
-    public Table(String tableName, ArrayList<Column> columns) {
+    public Table(String tableName, List<String> columnNames) {
         m_tableName = tableName;
-        for (Column column : columns)
-            addColumn(column);
+        for (String columnName : columnNames)
+            addColumn(new Column(tableName, columnName));
     }
 
     public void addColumn(Column column) {
@@ -25,8 +26,29 @@ public class Table {
         return m_columns;
     }
 
+    public ArrayList<Column> getColumns(Column withoutColumn) {
+        ArrayList<Column> ret = new ArrayList<Column>(m_columns);
+        ret.remove(withoutColumn);
+        return ret;
+    }
+
     public String getTableName() {
         return m_tableName;
+    }
+
+    public String [] getColumnNames() {
+        String [] res = new String[m_columns.size()];
+        for (int i = 0; i < m_columns.size(); i++)
+            res[i] = m_columns.get(i).getColumnName();
+        return res;
+    }
+
+    public String [] getColumnNames(Column withoutColumn) {
+        ArrayList<Column> columns = getColumns(withoutColumn);
+        String [] res = new String[columns.size()];
+        for (int i = 0; i < columns.size(); i++)
+            res[i] = columns.get(i).getColumnName();
+        return res;
     }
 
     @Override

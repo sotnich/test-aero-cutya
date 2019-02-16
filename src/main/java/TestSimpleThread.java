@@ -35,7 +35,7 @@ public class TestSimpleThread extends Thread {
         m_randomMax = ramdomMax;
         m_batchSize = batchSize;
         m_seconds = seconds;
-        m_installmentTable = new CutLinkTable(m_client, m_namespace, "installment");
+//        m_installmentTable = new CutLinkTable(m_client, m_namespace, "installment");
     }
 
     public void run() {
@@ -118,8 +118,8 @@ public class TestSimpleThread extends Thread {
     }
 
     private long executeWriteTable() {
-        m_installmentTable.putSecondaryKey("account_rk", String.valueOf(getRandom()),
-                "installment_rk", String.valueOf(getRandom()));
+//        m_installmentTable.putSecondaryKey("account_rk", String.valueOf(getRandom()),
+//                "installment_rk", String.valueOf(getRandom()));
         m_total_hits++;
         m_total_rows++;
         return 1;
