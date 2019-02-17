@@ -82,7 +82,6 @@ public class Utils {
         }
 
         public void scanCallback(Key key, Record record) {
-            recordCount++;
 
             long cntKey = 0L;
             for (String binName : record.bins.keySet()) {
