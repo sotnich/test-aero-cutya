@@ -23,6 +23,21 @@ public class TableValues {
             m_values.get(m_table.getColumns().get(i)).add(rowValues.get(i));
     }
 
+    public ArrayList<KeyValue> getRow(int i) {
+        ArrayList<KeyValue> res = new ArrayList<KeyValue>();
+        for (Column column : m_table.getColumns()) {
+            res.add(new KeyValue(column, m_values.get(column).get(i)));
+        }
+        return res;
+    }
+
+    public int getRowsCnt() {
+        if (m_table.getColumns().size() > 0) {
+            return m_values.get(m_table.getColumns().get(0)).size();
+        }
+        return 0;
+    }
+
     public void addRow(String [] rowValues) {
         for (int i = 0; i < m_table.getColumns().size(); i++)
             m_values.get(m_table.getColumns().get(i)).add(rowValues[i]);

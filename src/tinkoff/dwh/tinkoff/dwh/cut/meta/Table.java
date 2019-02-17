@@ -17,6 +17,11 @@ public class Table {
             addColumn(new Column(tableName, columnName));
     }
 
+    public Table(String tableName, String ... columnNames) {
+        m_tableName = tableName;
+        for (String columnName : columnNames)
+            addColumn(new Column(tableName, columnName));
+    }
     public void addColumn(Column column) {
         if (!m_columns.contains(column))
             m_columns.add(column);
@@ -67,5 +72,10 @@ public class Table {
         }
         ret += "}";
         return ret;
+    }
+
+    @Override
+    public int hashCode() {
+        return m_tableName.hashCode() + 32 * m_columns.hashCode();
     }
 }

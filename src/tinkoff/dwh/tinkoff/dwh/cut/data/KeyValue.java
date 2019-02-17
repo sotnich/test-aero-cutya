@@ -21,9 +21,23 @@ public class KeyValue {
         return m_value;
     }
 
-    public static ArrayList<KeyValue> copyWithout(ArrayList<KeyValue> kvs, KeyValue withoutKV) {
-        ArrayList<KeyValue> ret = new ArrayList<KeyValue>(kvs);
-        ret.remove(withoutKV);
+    public boolean isNonEmpty() {
+        return m_value != null && m_value.length() > 0;
+    }
+
+    public static ArrayList<KeyValue> copyNonEmptyWithout(ArrayList<KeyValue> kvs, KeyValue withoutKV) {
+        ArrayList<KeyValue> ret = new ArrayList<KeyValue>();
+        for (KeyValue kv : kvs) {
+            if (!kv.equals(withoutKV) && kv.isNonEmpty())
+                ret.add(kv);
+        }
         return ret;
+    }
+
+    public static ArrayList<KeyValue> fromArray(ArrayList<Column> columns, String ... values) {
+        ArrayList<KeyValue> res = new ArrayList<KeyValue>();
+        for (int i = 0; i < columns.size(); i++)
+            res.add(new KeyValue(columns.get(i), values[i]));
+        return res;
     }
 }

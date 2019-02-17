@@ -6,6 +6,7 @@ import com.aerospike.client.Key;
 import com.aerospike.client.Record;
 import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.ColumnsValues;
+import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
 import java.util.ArrayList;
@@ -24,15 +25,22 @@ public class CutLinkTable {
         m_client = client;
     }
 
+    public void addTableValues(TableValues values) {
+        if (!values.getTable().equals(m_table)) return;
+
+        for (int i = 0; i < values.getRowsCnt(); i++)
+            addRow(values.getRow(i));
+    }
+
     public void addRow(ArrayList<KeyValue> row) {
         for (KeyValue kv : row) {
-            addReference(kv, KeyValue.copyWithout(row, kv));
+            addReference(kv, KeyValue.copyNonEmptyWithout(row, kv));
         }
     }
 
     public void deleteRow(ArrayList<KeyValue> row) {
         for (KeyValue kv : row) {
-            deleteReference(kv, KeyValue.copyWithout(row, kv));
+            deleteReference(kv, KeyValue.copyNonEmptyWithout(row, kv));
         }
     }
 
@@ -58,9 +66,11 @@ public class CutLinkTable {
     }
 
     private void addReference(KeyValue prm, ArrayList<KeyValue> row) {
-        ColumnsValues kvRow = getReference(prm);
-        if (kvRow.add(row) > 0)
-            setReference(prm, kvRow);
+        if (prm.isNonEmpty() && row.size() > 0) {
+            ColumnsValues kvRow = getReference(prm);
+            if (kvRow.add(row) > 0)
+                setReference(prm, kvRow);
+        }
     }
 
     private void setReference(KeyValue prm, ColumnsValues row) {
@@ -81,9 +91,11 @@ public class CutLinkTable {
     }
 
     private void deleteReference(KeyValue prm, ArrayList<KeyValue> row) {
-        ColumnsValues kvRow = getReference(prm);
-        if (kvRow.delete(row) > 0)
-            setReference(prm, kvRow);
+        if (prm.isNonEmpty() && row.size() > 0) {
+            ColumnsValues kvRow = getReference(prm);
+            if (kvRow.delete(row) > 0)
+                setReference(prm, kvRow);
+        }
     }
 
     private ColumnsValues getRowFromRecord(Record record, ArrayList<Column> columns) {

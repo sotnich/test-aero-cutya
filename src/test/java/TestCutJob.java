@@ -27,6 +27,8 @@ public class TestCutJob extends BaseTest {
     @Test
     public void testPutNextTableInc_financial_account_chng() {
 
+        deleteTable("prod_dds.installment");
+
         JobTableRelations relations = new JobTableRelations(new String [][] {
                 {"prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
                 {"prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
@@ -44,7 +46,7 @@ public class TestCutJob extends BaseTest {
         installment.addRow(getKeyValues("prod_dds.installment","account_rk", "102", "installment_rk", "203"));
         installment.addRow(getKeyValues("prod_dds.installment","account_rk", "103", "installment_rk", "204"));
 
-        TableValues vals = getTableValues("prod_dds.financial_account_chng", new String [][] {
+        TableValues vals = Utils.getTableValues("prod_dds.financial_account_chng", new String [][] {
                 {"account_rk"},
                 {"111"},
                 {"101"},
@@ -60,5 +62,7 @@ public class TestCutJob extends BaseTest {
 
         assertArrays(etalonAccs, keysAccs);
         assertArrays(etalonInts, keysInst);
+
+        deleteTable("prod_dds.installment");
     }
 }
