@@ -1,19 +1,17 @@
-import com.aerospike.client.AerospikeClient;
 import org.junit.Assert;
 import org.junit.Test;
 import tinkoff.dwh.cut.CutLinkTable;
-import tinkoff.dwh.cut.KeyValueRow;
+import tinkoff.dwh.cut.data.ColumnsValues;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class TestCutLink extends BaseTest {
 
     @Test
-    public void testGetSecondaryKeys() {
+    public void testLookup1() {
 
         CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace,
                 new Table("installment", Arrays.asList("account_rk", "installment_rk")));
@@ -26,7 +24,7 @@ public class TestCutLink extends BaseTest {
         installment.addRow(getKeyValues("installment","account_rk", "102", "installment_rk", "203"));
         installment.addRow(getKeyValues("installment","account_rk", "103", "installment_rk", "204"));
 
-        KeyValueRow res = installment.lookup(new Column("installment", "account_rk"),
+        ColumnsValues res = installment.lookup(new Column("installment", "account_rk"),
                 Arrays.asList("101", "102", "103", "104"));
         List<String> etalon = Arrays.asList("201", "202", "203", "204");
 

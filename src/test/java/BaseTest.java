@@ -1,8 +1,10 @@
 import com.aerospike.client.AerospikeClient;
 import org.junit.Assert;
-import tinkoff.dwh.cut.KeyValue;
-import tinkoff.dwh.cut.KeyValueRow;
+import tinkoff.dwh.cut.data.KeyValue;
+import tinkoff.dwh.cut.data.ColumnsValues;
+import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
+import tinkoff.dwh.cut.meta.Table;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +30,22 @@ public class BaseTest {
         return ret;
     }
 
-    public ArrayList<String> getAllKeyValueValues(KeyValueRow row) {
+    public ArrayList<String> getAllKeyValueValues(ColumnsValues row) {
         ArrayList<String> ret = new ArrayList<String>();
         for (Column column : row.getColumns())
             ret.addAll(row.getValues(column));
+        return ret;
+    }
+
+    public TableValues getTableValues(String tableName, String [][] vals) {
+        Table table = new Table(tableName);
+        for (int i = 0; i < vals[0].length; i++)
+            table.addColumn(new Column(tableName, vals[0][i]));
+
+        TableValues ret = new TableValues(table);
+        for (int j = 1; j < vals.length; j++ )
+                ret.addRow(vals[j]);
+
         return ret;
     }
 }

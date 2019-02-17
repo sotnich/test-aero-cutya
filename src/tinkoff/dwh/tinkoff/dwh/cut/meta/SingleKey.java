@@ -3,6 +3,7 @@ package tinkoff.dwh.cut.meta;
 import tinkoff.dwh.cut.meta.Column;
 
 import java.util.ArrayList;
+import java.util.List;
 
 // Обеединение ключей из разных таблиц, но которые по сути одно и то же
 public class SingleKey {
@@ -21,6 +22,10 @@ public class SingleKey {
         return m_keys.contains(c);
     }
 
+    public List<Column> getColumns() {
+        return m_keys;
+    }
+
     @Override
     public boolean equals(Object o) {
         SingleKey ok = (SingleKey) o;
@@ -37,5 +42,10 @@ public class SingleKey {
         }
         ret += "}";
         return ret;
+    }
+
+    @Override
+    public int hashCode() {
+        return m_keys.hashCode();
     }
 }

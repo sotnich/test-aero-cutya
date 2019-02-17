@@ -1,4 +1,4 @@
-package tinkoff.dwh.cut;
+package tinkoff.dwh.cut.data;
 
 import tinkoff.dwh.cut.meta.Column;
 
