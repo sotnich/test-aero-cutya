@@ -1,4 +1,4 @@
-import com.aerospike.client.AerospikeClient;
+import com.aerospike.client.*;
 import org.junit.Assert;
 import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.ColumnsValues;
@@ -47,5 +47,13 @@ public class BaseTest {
                 ret.addRow(vals[j]);
 
         return ret;
+    }
+
+    public void deleteTable(String tableName) {
+        m_client.scanAll(null, m_testNamespace, tableName, new ScanCallback() {
+            public void scanCallback(Key key, Record record) throws AerospikeException {
+                m_client.delete(null, key);
+            }
+        });
     }
 }
