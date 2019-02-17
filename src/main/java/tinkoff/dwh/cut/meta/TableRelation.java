@@ -1,7 +1,5 @@
 package tinkoff.dwh.cut.meta;
 
-import tinkoff.dwh.cut.meta.Column;
-
 import java.util.ArrayList;
 
 public class TableRelation {

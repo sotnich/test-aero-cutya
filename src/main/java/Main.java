@@ -1,5 +1,4 @@
 import com.aerospike.client.AerospikeClient;
-import com.aerospike.client.Key;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
 import tinkoff.dwh.cut.meta.Table;
@@ -15,15 +14,15 @@ public class Main {
 
         String tableName = "prod_dds.installment";
 
-//        Utils.startStep("delete all rows from " + tableName);
-//        Utils.deleteTable(tableName, client, aerospikeNamespace);
-//        Utils.finishStep();
-//
-//        CutLinkTable installment = new CutLinkTable(client, aerospikeNamespace, new Table(tableName, "account_rk", "installment_rk"));
-//
-//        Utils.startStep("load data from CSV");
-//        Utils.loadFromCSV(installment, "./data/INSTALLMENT.csv");
-//        Utils.finishStep();
+        Utils.startStep("delete all rows from " + tableName);
+        Utils.deleteTable(tableName, client, aerospikeNamespace);
+        Utils.finishStep();
+
+        CutLinkTable installment = new CutLinkTable(client, aerospikeNamespace, new Table(tableName, "account_rk", "installment_rk"));
+
+        Utils.startStep("load data from CSV");
+        Utils.loadFromCSV(installment, "./data/INSTALLMENT.csv");
+        Utils.finishStep();
 
         Utils.printSetProfile(tableName, client, aerospikeNamespace);
 

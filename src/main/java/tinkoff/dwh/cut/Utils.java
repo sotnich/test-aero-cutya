@@ -81,6 +81,7 @@ public class Utils {
             client.scanAll(policy, namespace, tableName, this);
         }
 
+        @SuppressWarnings("unchecked")
         public void scanCallback(Key key, Record record) {
 
             long cntKey = 0L;
@@ -97,7 +98,7 @@ public class Utils {
         }
 
         public void printStat() {
-            System.out.println("record cnt: " + recordCount);
+            System.out.println("      record cnt: " + recordCount);
             for (Long key : m_cntCnt.keySet())
                 System.out.println(" " + key + " values in key cnt: " + m_cntCnt.get(key));
         }

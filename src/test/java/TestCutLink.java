@@ -5,7 +5,6 @@ import org.junit.Test;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
 import tinkoff.dwh.cut.data.ColumnsValues;
-import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
 
@@ -42,6 +41,7 @@ public class TestCutLink extends BaseTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSimpleAdd() {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
@@ -65,6 +65,7 @@ public class TestCutLink extends BaseTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testAddArray() {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
@@ -96,6 +97,7 @@ public class TestCutLink extends BaseTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testAddCrossArrays() {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
@@ -128,6 +130,7 @@ public class TestCutLink extends BaseTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testAddWithEmpty() {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);

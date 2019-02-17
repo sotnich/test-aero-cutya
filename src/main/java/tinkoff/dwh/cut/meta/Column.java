@@ -31,7 +31,7 @@ public class Column {
 
     @Override
     public String toString() {
-        return m_tableName + "." + m_columnName;
+        return m_tableName + "" + m_columnName;
     }
 }
 

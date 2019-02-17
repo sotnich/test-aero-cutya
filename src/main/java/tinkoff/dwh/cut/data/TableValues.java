@@ -48,7 +48,7 @@ public class TableValues {
     }
 
     public List<ColumnValues> getColumnsValues() {
-        List ret = new ArrayList<ColumnValues>();
+        ArrayList<ColumnValues> ret = new ArrayList<ColumnValues>();
         for (Column column : m_values.keySet())
             ret.add(getColumnValues(column));
         return ret;

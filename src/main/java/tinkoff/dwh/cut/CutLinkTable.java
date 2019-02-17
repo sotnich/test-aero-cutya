@@ -4,11 +4,12 @@ import com.aerospike.client.AerospikeClient;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.Record;
-import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.ColumnsValues;
+import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -98,6 +99,7 @@ public class CutLinkTable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private ColumnsValues getRowFromRecord(Record record, ArrayList<Column> columns) {
         ColumnsValues ret = new ColumnsValues(columns);
         if (record != null) {
