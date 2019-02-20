@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Utils {
     public static TableValues getTableValues(String tableName, String [][] vals) {
@@ -23,6 +24,21 @@ public class Utils {
         for (int j = 1; j < vals.length; j++ )
             ret.addRow(vals[j]);
 
+        return ret;
+    }
+
+    public static ArrayList<String> loadCSV(String csvFile) {
+        ArrayList<String> ret = new ArrayList<String>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(csvFile));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                ret.add(line);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
         return ret;
     }
 

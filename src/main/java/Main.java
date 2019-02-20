@@ -6,6 +6,8 @@ import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
 import tinkoff.dwh.cut.meta.Table;
 
+import java.util.ArrayList;
+
 public class Main {
 
     private static String m_aerospikeHost = "localhost";
@@ -15,6 +17,8 @@ public class Main {
     private static CutEngine m_engine;
 
     public static void main(String[] args) {
+
+        ArrayList<String> res = Utils.loadCSV("./data/");
 
         parseOptions(args);
         m_client = new AerospikeClient(m_aerospikeHost, 3000);
