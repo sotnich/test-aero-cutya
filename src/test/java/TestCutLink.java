@@ -20,7 +20,7 @@ public class TestCutLink extends BaseTest {
         String tableName = "prod_dds.installment";
 
         deleteTable(tableName);
-        CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
+        CutLinkTable installment = new CutLinkTable(m_client, m_namespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
 
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "210"));
         installment.addRow(getKeyValues(tableName,"account_rk", "101", "installment_rk", "201"));
@@ -46,14 +46,14 @@ public class TestCutLink extends BaseTest {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
 
-        CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
+        CutLinkTable installment = new CutLinkTable(m_client, m_namespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
 
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "210"));
 
-        Assert.assertEquals(2, Utils.getSetSize(tableName, m_client, m_testNamespace));
+        Assert.assertEquals(2, Utils.getSetSize(tableName, m_client, m_namespace));
 
-        Record accnRec = m_client.get(null, new Key(m_testNamespace, tableName, "ACCN100"));
-        Record instRec = m_client.get(null, new Key(m_testNamespace, tableName, "INST210"));
+        Record accnRec = m_client.get(null, new Key(m_namespace, tableName, "ACCN100"));
+        Record instRec = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
 
         Assert.assertEquals(accnRec.bins.size(), 1);
         Assert.assertEquals(instRec.bins.size(), 1);
@@ -70,18 +70,18 @@ public class TestCutLink extends BaseTest {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
 
-        CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
+        CutLinkTable installment = new CutLinkTable(m_client, m_namespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
 
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "210"));
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "211"));
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "212"));
 
-        Assert.assertEquals(4, Utils.getSetSize(tableName, m_client, m_testNamespace));
+        Assert.assertEquals(4, Utils.getSetSize(tableName, m_client, m_namespace));
 
-        Record accnRec = m_client.get(null, new Key(m_testNamespace, tableName, "ACCN100"));
-        Record instRec1 = m_client.get(null, new Key(m_testNamespace, tableName, "INST210"));
-        Record instRec2 = m_client.get(null, new Key(m_testNamespace, tableName, "INST211"));
-        Record instRec3 = m_client.get(null, new Key(m_testNamespace, tableName, "INST212"));
+        Record accnRec = m_client.get(null, new Key(m_namespace, tableName, "ACCN100"));
+        Record instRec1 = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
+        Record instRec2 = m_client.get(null, new Key(m_namespace, tableName, "INST211"));
+        Record instRec3 = m_client.get(null, new Key(m_namespace, tableName, "INST212"));
 
         Assert.assertEquals(accnRec.bins.size(), 1);
         Assert.assertEquals(instRec1.bins.size(), 1);
@@ -102,19 +102,19 @@ public class TestCutLink extends BaseTest {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
 
-        CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
+        CutLinkTable installment = new CutLinkTable(m_client, m_namespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
 
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "210"));
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "211"));
         installment.addRow(getKeyValues(tableName,"account_rk", "101", "installment_rk", "210"));
         installment.addRow(getKeyValues(tableName,"account_rk", "101", "installment_rk", "211"));
 
-        Assert.assertEquals(4, Utils.getSetSize(tableName, m_client, m_testNamespace));
+        Assert.assertEquals(4, Utils.getSetSize(tableName, m_client, m_namespace));
 
-        Record accnRec1 = m_client.get(null, new Key(m_testNamespace, tableName, "ACCN100"));
-        Record accnRec2 = m_client.get(null, new Key(m_testNamespace, tableName, "ACCN101"));
-        Record instRec1 = m_client.get(null, new Key(m_testNamespace, tableName, "INST210"));
-        Record instRec2 = m_client.get(null, new Key(m_testNamespace, tableName, "INST211"));
+        Record accnRec1 = m_client.get(null, new Key(m_namespace, tableName, "ACCN100"));
+        Record accnRec2 = m_client.get(null, new Key(m_namespace, tableName, "ACCN101"));
+        Record instRec1 = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
+        Record instRec2 = m_client.get(null, new Key(m_namespace, tableName, "INST211"));
 
         Assert.assertEquals(accnRec1.bins.size(), 1);
         Assert.assertEquals(accnRec2.bins.size(), 1);
@@ -135,17 +135,17 @@ public class TestCutLink extends BaseTest {
         String tableName = "prod_dds.installment";
         deleteTable(tableName);
 
-        CutLinkTable installment = new CutLinkTable(m_client, m_testNamespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
+        CutLinkTable installment = new CutLinkTable(m_client, m_namespace, new Table(tableName, Arrays.asList("account_rk", "installment_rk")));
 
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", "210"));
         installment.addRow(getKeyValues(tableName,"account_rk", "100", "installment_rk", ""));
         installment.addRow(getKeyValues(tableName,"account_rk", "", "installment_rk", "210"));
         installment.addRow(getKeyValues(tableName,"account_rk", "", "installment_rk", "" + ""));
 
-        Assert.assertEquals(2, Utils.getSetSize(tableName, m_client, m_testNamespace));
+        Assert.assertEquals(2, Utils.getSetSize(tableName, m_client, m_namespace));
 
-        Record accnRec = m_client.get(null, new Key(m_testNamespace, tableName, "ACCN100"));
-        Record instRec = m_client.get(null, new Key(m_testNamespace, tableName, "INST210"));
+        Record accnRec = m_client.get(null, new Key(m_namespace, tableName, "ACCN100"));
+        Record instRec = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
 
         Assert.assertEquals(accnRec.bins.size(), 1);
         Assert.assertEquals(instRec.bins.size(), 1);

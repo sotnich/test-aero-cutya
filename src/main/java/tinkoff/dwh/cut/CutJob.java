@@ -41,6 +41,7 @@ public class CutJob {
     }
 
     // Добавить очередной инкремент
+    // TODO: Может приходить больше колонок чем нужно - нужно убедиться что они не обрабатываются напрасно
     public void putTable(TableValues values) {
 
 //        addNewLinks(columnNames, rows);

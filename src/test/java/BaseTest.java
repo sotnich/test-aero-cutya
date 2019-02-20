@@ -2,25 +2,24 @@ import com.aerospike.client.*;
 import org.junit.Assert;
 import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.ColumnsValues;
-import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
-import tinkoff.dwh.cut.meta.Table;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class BaseTest {
-//  String m_aerospikeHost = "178.128.134.224";
-    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
-    String m_testNamespace = "ssd";
+    String m_aerospikeHost = "178.128.134.224";
+    String m_namespace = "test2";
+
+//    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
+//    String m_namespace = "ssd";
+
     AerospikeClient m_client;
 
     public BaseTest(String aerospikeHost, String namespace) {
         m_aerospikeHost = aerospikeHost;
-        m_testNamespace = namespace;
+        m_namespace = namespace;
         m_client = new AerospikeClient(m_aerospikeHost, 3000);
     }
 
@@ -51,7 +50,7 @@ public class BaseTest {
     }
 
     public void deleteTable(String tableName) {
-        m_client.scanAll(null, m_testNamespace, tableName, new ScanCallback() {
+        m_client.scanAll(null, m_namespace, tableName, new ScanCallback() {
             public void scanCallback(Key key, Record record) throws AerospikeException {
                 m_client.delete(null, key);
             }

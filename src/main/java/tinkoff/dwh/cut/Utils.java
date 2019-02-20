@@ -26,6 +26,22 @@ public class Utils {
         return ret;
     }
 
+    public static TableValues loadTableValuesFromCSV(String tableName, String csvFile) {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(csvFile));
+            TableValues ret = new TableValues(new Table(tableName, br.readLine().split(";")));
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                ret.addRow(line.split("\\;",-1));
+            }
+            return ret;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static void loadFromCSV(CutLinkTable linkTable, String csvFile) {
         ArrayList<Column> columns = linkTable.getTable().getColumns();
         String line = "";

@@ -16,11 +16,13 @@ public class CutEngine {
     private HashMap<String, JobTableRelations> m_jobTableRelations = new HashMap<String, JobTableRelations>();
 
     private AerospikeClient m_client;
+    private String m_namespace;
 
     private HashMap<String, CutJob> m_cuts = new HashMap<String, CutJob>();
 
-    public CutEngine(AerospikeClient client, HashMap<String, ArrayList<TableRelation>> relations) {
+    public CutEngine(AerospikeClient client, String namespace, HashMap<String, ArrayList<TableRelation>> relations) {
         m_client = client;
+        m_namespace = namespace;
         for (String jobName : relations.keySet()) {
             m_jobTableRelations.put(jobName, new JobTableRelations(relations.get(jobName)));
         }
@@ -55,14 +57,43 @@ public class CutEngine {
     }
 
     public ArrayList<Table> getTables() {
-        HashSet<Table> ret = new HashSet<Table>();
+        ArrayList<Table> ret = new ArrayList<Table>();
         for (String jobName : m_jobTableRelations.keySet()) {
-            ret.addAll(m_jobTableRelations.get(jobName).getTables());
+            for (Table newTable : m_jobTableRelations.get(jobName).getTables()) {
+                boolean found = false;
+                for (Table table : ret) {
+                    if (table.getTableName().equals(newTable.getTableName())) {
+                        table.addColumns(newTable.getColumns());
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    ret.add(new Table(newTable));
+                }
+            }
         }
         return new ArrayList<Table>(ret);
     }
 
-    public void putInc(TableValues values) {
+    // Получить список Job'ов которым нужна таблица
+    public ArrayList<String> getJobs(Table table) {
+        ArrayList<String> ret = new ArrayList<String>();
+        for (String jobName : m_jobTableRelations.keySet()) {
+            if (m_jobTableRelations.get(jobName).getTables().contains(table))
+                ret.add(jobName);
+        }
+        return ret;
+    }
 
+    public ArrayList<CutJob> getCuts() {
+        return new ArrayList<CutJob>(m_cuts.values());
+    }
+
+    public void putInc(TableValues values) {
+        for (String jobName : getJobs(values.getTable())) {
+            if (!m_cuts.containsKey(jobName))
+                m_cuts.put(jobName, new CutJob(m_client, m_namespace, jobName, this));
+            m_cuts.get(jobName).putTable(values);
+        }
     }
 }

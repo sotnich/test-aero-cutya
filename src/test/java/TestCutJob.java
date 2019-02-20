@@ -3,7 +3,6 @@ import org.junit.Test;
 import tinkoff.dwh.cut.*;
 import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
-import tinkoff.dwh.cut.meta.JobTableRelations;
 
 import java.util.*;
 
@@ -12,8 +11,8 @@ public class TestCutJob extends BaseTest {
     @Test
     public void testCreation() {
 
-        CutJob job = new CutJob(m_client, m_testNamespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
-                new CutEngine(Utils.loadRelationsFromArray(new String [][] {
+        CutJob job = new CutJob(m_client, m_namespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
+                new CutEngine(m_client, m_namespace, Utils.loadRelationsFromArray(new String [][] {
                         {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
                         {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
                         {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
@@ -29,8 +28,8 @@ public class TestCutJob extends BaseTest {
 
         deleteTable("prod_dds.installment");
 
-        CutJob job = new CutJob(m_client, m_testNamespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
-                new CutEngine(Utils.loadRelationsFromArray(new String [][] {
+        CutJob job = new CutJob(m_client, m_namespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
+                new CutEngine(m_client, m_namespace, Utils.loadRelationsFromArray(new String [][] {
                         {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
                         {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
                         {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}

@@ -1,17 +1,15 @@
 import com.aerospike.client.AerospikeClient;
 import org.apache.commons.cli.*;
+import sun.nio.ch.Util;
 import tinkoff.dwh.cut.CutEngine;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
-import tinkoff.dwh.cut.meta.JobTableRelations;
 import tinkoff.dwh.cut.meta.Table;
-
-import java.util.ArrayList;
 
 public class Main {
 
     private static String m_aerospikeHost = "localhost";
-    private static String m_aerospikeNamespace = "test";
+    private static String m_namespace = "test";
     private static String m_method = "init";
     private static AerospikeClient m_client;
     private static CutEngine m_engine;
@@ -21,7 +19,7 @@ public class Main {
         parseOptions(args);
         m_client = new AerospikeClient(m_aerospikeHost, 3000);
 
-        m_engine = new CutEngine(Utils.loadRelationsFromCSV("./data/default_matrix_meta.csv"));
+        m_engine = new CutEngine(m_client, m_namespace, Utils.loadRelationsFromCSV("./data/default_matrix_meta.csv"));
 
         if (m_method.equals("init"))
             init();
@@ -33,7 +31,7 @@ public class Main {
 
     private static void cut() {
         for (Table table : m_engine.getTables()) {
-
+            cutTable(table);
         }
     }
 
@@ -43,19 +41,25 @@ public class Main {
         }
     }
 
+    private static void cutTable(Table table) {
+        Utils.startStep("add increment for " + table.getTableName());
+        m_engine.putInc(Utils.loadTableValuesFromCSV(table.getTableName(), "./data/" + table.getTableName() + ".inc.csv"));
+        Utils.finishStep();
+    }
+
     private static void initTable(Table table) {
         Utils.startStep("delete all rows from " + table.getTableName());
-        Utils.deleteTable(table.getTableName(), m_client, m_aerospikeNamespace);
+        Utils.deleteTable(table.getTableName(), m_client, m_namespace);
         Utils.finishStep();
 
         String csvName = "./data/" + table.getTableName() + ".csv";
         Utils.startStep("load data from " + csvName + " into table " + table.getTableName());
-        CutLinkTable linkTable = new CutLinkTable(m_client, m_aerospikeNamespace, table);
+        CutLinkTable linkTable = new CutLinkTable(m_client, m_namespace, table);
         Utils.loadFromCSV(linkTable, csvName);
         Utils.finishStep();
 
         Utils.startStep("loading profile for table " + table.getTableName());
-        Utils.printSetProfile(table.getTableName(), m_client, m_aerospikeNamespace);
+        Utils.printSetProfile(table.getTableName(), m_client, m_namespace);
         Utils.finishStep();
     }
 
@@ -83,7 +87,7 @@ public class Main {
             if (host != null)
                 m_aerospikeHost = host;
             if (namespace != null)
-                m_aerospikeNamespace = namespace;
+                m_namespace = namespace;
             if (method != null)
                 m_method = method;
         } catch (ParseException e) {
