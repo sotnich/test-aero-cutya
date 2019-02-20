@@ -13,9 +13,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BaseTest {
-    String m_aerospikeHost = "178.128.134.224";
-//    static final String m_aerospikeHost = "10.216.193.85";
-    String m_testNamespace = "test";
+//  String m_aerospikeHost = "178.128.134.224";
+    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
+    String m_testNamespace = "ssd";
     AerospikeClient m_client;
 
     public BaseTest(String aerospikeHost, String namespace) {

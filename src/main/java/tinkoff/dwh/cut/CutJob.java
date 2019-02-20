@@ -30,10 +30,8 @@ public class CutJob {
         m_keys = new SingleKeysValues(m_cutEngine.getJobRelations(m_jobName).getSingleKeys());
 
         // Для таблиц с более одной колонкой создаем таблицу-связку в Aerospike
-        for (Table table : m_cutEngine.getJobRelations(m_jobName).getTables()) {
-            if (table.getColumns().size() > 1) {
-                m_cutLinkTables.add(new CutLinkTable(m_client, m_aerospikeNamespace, table));
-            }
+        for (Table table : m_cutEngine.getJobRelations(m_jobName).getTablesWithMoreThanOneColumn()) {
+            m_cutLinkTables.add(new CutLinkTable(m_client, m_aerospikeNamespace, table));
         }
     }
 

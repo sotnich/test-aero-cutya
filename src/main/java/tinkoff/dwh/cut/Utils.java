@@ -6,6 +6,7 @@ import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
+import tinkoff.dwh.cut.meta.TableRelation;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -39,6 +40,39 @@ public class Utils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static HashMap<String, ArrayList<TableRelation>> loadRelationsFromCSV(String csvFile) {
+        HashMap<String, ArrayList<TableRelation>> ret = new HashMap<String, ArrayList<TableRelation>>();
+        String line = "";
+        String cvsSplitBy = ",";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(csvFile));
+            br.readLine().split(cvsSplitBy);
+
+            while ((line = br.readLine()) != null) {
+                String [] fields = line.split(cvsSplitBy);
+                String jobName = fields[0];
+                if (!ret.containsKey(jobName))
+                    ret.put(jobName, new ArrayList<TableRelation>());
+                ret.get(jobName).add(new TableRelation(new Column(fields[1], fields[2]), new Column(fields[3], fields[4])));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+    public static HashMap<String, ArrayList<TableRelation>> loadRelationsFromArray(String [][] values) {
+        HashMap<String, ArrayList<TableRelation>> ret = new HashMap<String, ArrayList<TableRelation>>();
+        for (String [] row : values) {
+            String jobName = row[0];
+            if (!ret.containsKey(jobName))
+                ret.put(jobName, new ArrayList<TableRelation>());
+            ret.get(jobName).add(new TableRelation(new Column(row[1], row[2]), new Column(row[3], row[4])));
+
+        }
+        return ret;
     }
 
     public static void deleteTable(String tableName, final AerospikeClient client, String namespace) {

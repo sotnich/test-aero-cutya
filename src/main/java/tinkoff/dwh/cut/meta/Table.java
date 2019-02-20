@@ -11,6 +11,11 @@ public class Table {
         m_tableName = tableName;
     }
 
+    public Table(Table table) {
+        m_tableName = table.m_tableName;
+        addColumns(table.getColumns());
+    }
+
     public Table(String tableName, List<String> columnNames) {
         m_tableName = tableName;
         for (String columnName : columnNames)
@@ -25,6 +30,12 @@ public class Table {
     public void addColumn(Column column) {
         if (!m_columns.contains(column))
             m_columns.add(column);
+    }
+
+    public void addColumns(ArrayList<Column> columns) {
+        for (Column column : columns) {
+            addColumn(column);
+        }
     }
 
     public ArrayList<Column> getColumns() {

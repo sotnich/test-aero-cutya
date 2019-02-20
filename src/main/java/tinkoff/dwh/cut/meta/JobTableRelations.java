@@ -1,5 +1,7 @@
 package tinkoff.dwh.cut.meta;
 
+import javafx.scene.control.Tab;
+
 import java.util.ArrayList;
 
 public class JobTableRelations {
@@ -46,7 +48,7 @@ public class JobTableRelations {
         for (Column column : relation.getColumns()) {
             Table nTable = null;
             for (Table table : m_tables) {
-                if (table.getTableName() == column.getTableName())
+                if (table.getTableName().equals(column.getTableName()))
                     nTable = table;
             }
             if (nTable == null) {
@@ -75,5 +77,14 @@ public class JobTableRelations {
 
     public ArrayList<Table> getTables() {
         return m_tables;
+    }
+
+    public ArrayList<Table> getTablesWithMoreThanOneColumn() {
+        ArrayList<Table> ret = new ArrayList<Table>();
+        for (Table table : m_tables) {
+            if (table.getColumns().size() > 1)
+                ret.add(table);
+        }
+        return ret;
     }
 }

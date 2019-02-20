@@ -1,32 +1,95 @@
 import com.aerospike.client.AerospikeClient;
+import org.apache.commons.cli.*;
+import tinkoff.dwh.cut.CutEngine;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
+import tinkoff.dwh.cut.meta.JobTableRelations;
 import tinkoff.dwh.cut.meta.Table;
+
+import java.util.ArrayList;
 
 public class Main {
 
+    private static String m_aerospikeHost = "localhost";
+    private static String m_aerospikeNamespace = "test";
+    private static String m_method = "init";
+    private static AerospikeClient m_client;
+    private static CutEngine m_engine;
+
     public static void main(String[] args) {
 
-        String aerospikeHost = "localhost";
-//        String aerospikeHost = "178.128.134.224";
-        String aerospikeNamespace = "test2";
-        AerospikeClient client = new AerospikeClient(aerospikeHost, 3000);
+        parseOptions(args);
+        m_client = new AerospikeClient(m_aerospikeHost, 3000);
 
-        String tableName = "prod_dds.installment";
+        m_engine = new CutEngine(Utils.loadRelationsFromCSV("./data/default_matrix_meta.csv"));
 
-        Utils.startStep("delete all rows from " + tableName);
-        Utils.deleteTable(tableName, client, aerospikeNamespace);
+        if (m_method.equals("init"))
+            init();
+        else if (m_method.equals("cut"))
+            cut();
+
+        m_client.close();
+    }
+
+    private static void cut() {
+        for (Table table : m_engine.getTables()) {
+
+        }
+    }
+
+    private static void init() {
+        for (Table table : m_engine.getTablesWithMoreThanOneColumn()) {
+            initTable(table);
+        }
+    }
+
+    private static void initTable(Table table) {
+        Utils.startStep("delete all rows from " + table.getTableName());
+        Utils.deleteTable(table.getTableName(), m_client, m_aerospikeNamespace);
         Utils.finishStep();
 
-        CutLinkTable installment = new CutLinkTable(client, aerospikeNamespace, new Table(tableName, "account_rk", "installment_rk"));
-
-        Utils.startStep("load data from CSV");
-        Utils.loadFromCSV(installment, "./data/INSTALLMENT.csv");
+        String csvName = "./data/" + table.getTableName() + ".csv";
+        Utils.startStep("load data from " + csvName + " into table " + table.getTableName());
+        CutLinkTable linkTable = new CutLinkTable(m_client, m_aerospikeNamespace, table);
+        Utils.loadFromCSV(linkTable, csvName);
         Utils.finishStep();
 
-        Utils.printSetProfile(tableName, client, aerospikeNamespace);
+        Utils.startStep("loading profile for table " + table.getTableName());
+        Utils.printSetProfile(table.getTableName(), m_client, m_aerospikeNamespace);
+        Utils.finishStep();
+    }
 
-//        Utils.deleteTable(tableName, client, aerospikeNamespace);
+    private static void parseOptions(String [] args) {
+
+        String default_host = "localhost";
+
+        Options options = new Options();
+
+        options.addOption(new Option("h", "host", true, "aerospike host"));
+        options.addOption(new Option("n", "namespace", true, "aerospike namespace"));
+        options.addOption(new Option("m", "method", true, "method to execute"));
+
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd;
+
+        try {
+            cmd = parser.parse(options, args);
+
+            String host = cmd.getOptionValue("host");
+            String namespace = cmd.getOptionValue("namespace");
+            String method = cmd.getOptionValue("method");
+
+            if (host != null)
+                m_aerospikeHost = host;
+            if (namespace != null)
+                m_aerospikeNamespace = namespace;
+            if (method != null)
+                m_method = method;
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("aero-test", options);
+        }
     }
 
 //    private static String default_host = "localhost";

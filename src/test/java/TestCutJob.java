@@ -12,12 +12,12 @@ public class TestCutJob extends BaseTest {
     @Test
     public void testCreation() {
 
-        JobTableRelations relations = new JobTableRelations(new String [][] {
-                {"prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
-                {"prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
-                {"prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
-        });
-        CutJob job = new CutJob(m_client, m_testNamespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A", new CutEngine(relations));
+        CutJob job = new CutJob(m_client, m_testNamespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
+                new CutEngine(Utils.loadRelationsFromArray(new String [][] {
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
+                })));
 
         // Проверяем что создалась ровно одна таблица для трансляции ключей
         Assert.assertTrue(job.getCutLinkTables().size() == 1);
@@ -29,12 +29,12 @@ public class TestCutJob extends BaseTest {
 
         deleteTable("prod_dds.installment");
 
-        JobTableRelations relations = new JobTableRelations(new String [][] {
-                {"prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
-                {"prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
-                {"prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
-        });
-        CutJob job = new CutJob(m_client, m_testNamespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A", new CutEngine(relations));
+        CutJob job = new CutJob(m_client, m_testNamespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
+                new CutEngine(Utils.loadRelationsFromArray(new String [][] {
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
+                })));
 
         CutLinkTable installment = job.getCutLinkTables().get(0);
 
