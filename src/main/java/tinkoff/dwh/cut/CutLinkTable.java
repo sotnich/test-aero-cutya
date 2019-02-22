@@ -10,6 +10,7 @@ import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,25 +46,35 @@ public class CutLinkTable {
         }
     }
 
-    public ColumnsValues lookup(KeyValue key) {
-        return getReference(key);
-    }
-
     public ColumnsValues lookup(Column prm, List<String> values) {
+        ArrayList<String> prmValuesD = new ArrayList<String>(new HashSet<String>(values));  // Дедубликация входящих ключей
 
-        // Дедубликация входящих ключей и формирование списка ключей для поиска
-        ArrayList<String> prmValuesD = new ArrayList<String>(new HashSet<String>(values));
-        Key [] keys = new Key[prmValuesD.size()];
-        for (int i = 0; i < prmValuesD.size(); i++) {
-            keys[i] = getKey(new KeyValue(prm, prmValuesD.get(i)));
+        if (prmValuesD.size() <= 30000)
+            return getReference(prm, prmValuesD);
+        else {
+            int threadCnt = 10;
+            int batchSize = prmValuesD.size() / threadCnt;
+            ColumnsValuesLoaderThread [] threads = new ColumnsValuesLoaderThread[threadCnt];
+            for (int i = 0; i < threadCnt; i++) {
+                List<String> subList = prmValuesD.subList(i * batchSize, Math.min(prmValuesD.size(), ((i + 1) * batchSize) + 1) );
+                threads[i] = new ColumnsValuesLoaderThread(prm, subList, this);
+                threads[i].start();
+//                System.out.println("[lookup thread " + i + " start");
+            }
+
+            ColumnsValues ret = new ColumnsValues();
+            try {
+                for (int i = 0; i < threadCnt; i++) {
+                    threads[i].join();
+//                    System.out.println("[lookup thread " + i + " finish");
+                    ret.add(threads[i].getValues());
+                }
+            }
+            catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+            return ret;
         }
-
-        ColumnsValues ret = new ColumnsValues(m_table.getColumns(prm));
-        Record [] records = m_client.get(null, keys, m_table.getColumnNames(prm));
-        for (Record record : records)
-            ret.add(getRowFromRecord(record, m_table.getColumns(prm)));
-
-        return ret;
     }
 
     private void addReference(KeyValue prm, ArrayList<KeyValue> row) {
@@ -80,7 +91,8 @@ public class CutLinkTable {
             if (row.getValues(column).size() > 0)
                 bins.add(new Bin(column.getColumnName(), row.getValues(column)));
         }
-        if (bins.size() > 0)
+        bins.add(new Bin(prm.getKey().getColumnName(), prm.getValue()));
+        if (bins.size() > 1)
             m_client.put(null, getKey(prm), bins.toArray(new Bin[0]));
         else
             m_client.delete(null, getKey(prm));
@@ -88,7 +100,29 @@ public class CutLinkTable {
 
     private ColumnsValues getReference(KeyValue prm) {
         Record record = m_client.get(null, getKey(prm), m_table.getColumnNames(prm.getKey()));
-        return getRowFromRecord(record, m_table.getColumns(prm.getKey()));
+        return getRowFromRecord(record, null, m_table.getColumns(prm.getKey()));
+    }
+
+    public ColumnsValues getReference(Column prmColumn, List<String> values) {
+
+        ColumnsValues ret = new ColumnsValues(m_table.getColumns());
+        if (values.size() == 0) return ret;
+
+        int batchSize = 5000;
+        for (int offset = 0; offset < values.size(); offset += batchSize) {
+            int size = Math.min(batchSize, values.size() - offset);
+            Key[] keys = new Key[size];
+            for (int i = 0; i < size; i++)
+                keys[i] = getKey(prmColumn, values.get(offset + i));
+
+            Record[] records = m_client.get(null, keys, m_table.getColumnNames());
+            boolean [] exists = m_client.exists(null, keys);
+            for (Record record : records) {
+                if (record != null)
+                    ret.add(getRowFromRecord(record, prmColumn, m_table.getColumns(prmColumn)));
+            }
+        }
+        return ret;
     }
 
     private void deleteReference(KeyValue prm, ArrayList<KeyValue> row) {
@@ -100,12 +134,14 @@ public class CutLinkTable {
     }
 
     @SuppressWarnings("unchecked")
-    private ColumnsValues getRowFromRecord(Record record, ArrayList<Column> columns) {
-        ColumnsValues ret = new ColumnsValues(columns);
+    private ColumnsValues getRowFromRecord(Record record, Column prmColumn, ArrayList<Column> secColumns) {
+        ColumnsValues ret = new ColumnsValues(secColumns);
         if (record != null) {
-            for (Column column : columns) {
+            for (Column column : secColumns) {
                 ret.addColumnValues(column, (ArrayList<String>) record.getValue(column.getColumnName()));
             }
+            if (prmColumn != null)
+                ret.addColumnValue(prmColumn, record.getString(prmColumn.getColumnName()));
         }
         return ret;
     }
@@ -122,12 +158,16 @@ public class CutLinkTable {
         else return keyName;
     }
 
-    private String getKeyVal(KeyValue kv) {
-        return getShortKeyName(kv.getKey().getColumnName())+kv.getValue();
+    private String getKeyVal(Column column, String value) {
+        return getShortKeyName(column.getColumnName())+value;
     }
 
     private Key getKey(KeyValue kv) {
-        return new Key(m_namespace, m_table.getTableName(), getKeyVal(kv));
+        return new Key(m_namespace, m_table.getTableName(), getKeyVal(kv.getKey(), kv.getValue()));
+    }
+
+    private Key getKey(Column column, String value) {
+        return new Key(m_namespace, column.getTableName(), getKeyVal(column, value));
     }
 
     public Table getTable() {

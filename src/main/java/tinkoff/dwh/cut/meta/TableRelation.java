@@ -6,10 +6,12 @@ public class TableRelation {
 
     private Column m_left;
     private Column m_right;
+    private String m_type;      // Тип связи - left, inner, full
 
-    public TableRelation(Column left, Column right){
+    public TableRelation(Column left, Column right, String type){
         m_left = left;
         m_right = right;
+        m_type = type;
     }
 
     public Column getLeft() {

@@ -7,11 +7,11 @@ import java.util.*;
 
 // Значения привязанные к SingleKey
 public class SingleKeysValues {
-    private HashMap<SingleKey, List<String>> m_values = new HashMap<SingleKey, List<String>>();
+    private HashMap<SingleKey, HashSet<String>> m_values = new HashMap<SingleKey, HashSet<String>>();
 
     public SingleKeysValues(List<SingleKey> singleKeys) {
         for (SingleKey singleKey : singleKeys)
-            m_values.put(singleKey, new ArrayList<String>());
+            m_values.put(singleKey, new HashSet<String>());
     }
 
     public SingleKey getSingleKey(Column column) {
@@ -22,21 +22,14 @@ public class SingleKeysValues {
         return null;
     }
 
-    public List<String> getValues(Column column) {
+    public Set<String> getValues(Column column) {
         return m_values.get(getSingleKey(column));
     }
 
-    public ColumnValues addValues(ColumnValues values) {
-        ColumnValues ret = new ColumnValues(values.getColumn());
-        List<String> curValues = getValues(values.getColumn());
-        if (curValues == null)
-            return ret;
-        for (String value : values.getValues()) {
-            if (!curValues.contains(value)) {
-                ret.addVaue(value);
-                curValues.add(value);
-            }
-        }
-        return ret;
+    public void addValuesAndRemoveExisting(ColumnValues values, boolean add_flg) {
+        Set<String> curValues = getValues(values.getColumn());
+        values.getValues().removeAll(curValues);                    // Удаляем в новых те, которые уже есть
+        if (add_flg)
+            curValues.addAll(values.getValues());
     }
 }

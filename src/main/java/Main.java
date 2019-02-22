@@ -4,6 +4,7 @@ import sun.nio.ch.Util;
 import tinkoff.dwh.cut.CutEngine;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
+import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Table;
 
 import java.util.ArrayList;
@@ -17,8 +18,6 @@ public class Main {
     private static CutEngine m_engine;
 
     public static void main(String[] args) {
-
-        ArrayList<String> res = Utils.loadCSV("./data/");
 
         parseOptions(args);
         m_client = new AerospikeClient(m_aerospikeHost, 3000);
@@ -46,8 +45,20 @@ public class Main {
     }
 
     private static void cutTable(Table table) {
+        String csvFile = "./data/" + table.getTableName() + ".inc.csv";
+        Utils.startStep("load csv " + csvFile);
+        ArrayList<String> lines = Utils.loadCSV(csvFile);
+        System.out.println("loaded " + lines.size() + " records");
+        Utils.finishStep();
+
         Utils.startStep("add increment for " + table.getTableName());
-        m_engine.putInc(Utils.loadTableValuesFromCSV(table.getTableName(), "./data/" + table.getTableName() + ".inc.csv"));
+//        int numCnt = 1000000;
+//        for (int offcet = 0; offcet < lines.size(); offcet += numCnt) {
+//            TableValues values = Utils.getTableValues(table.getTableName(), lines, offcet, numCnt);
+//            m_engine.putInc(values);
+//        }
+        TableValues values = Utils.getTableValues(table.getTableName(), lines, 0, lines.size());
+        m_engine.putInc(values);
         Utils.finishStep();
     }
 

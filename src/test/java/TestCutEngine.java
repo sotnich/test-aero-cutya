@@ -11,11 +11,11 @@ public class TestCutEngine extends BaseTest {
     @Test
     public void testGetTablesWithMoreThanOneColumn() {
         CutEngine engine = new CutEngine(m_client, m_namespace, Utils.loadRelationsFromArray(new String [][] {
-                {"EMART JOB 1", "prod_dds.installment", "installment_rk",       "prod_dds.installment",                 "installment_rk"},
-                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng",      "account_rk"},
-                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "account_rk"},
-                {"EMART JOB 2", "prod_dds.installment", "parent_account_rk",    "prod_dds.financial_account_chng",      "account_rk"},
-                {"EMART JOB 2", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "parent_account_rk"}
+                {"EMART JOB 1", "prod_dds.installment", "installment_rk",       "prod_dds.installment",                 "installment_rk", "inner"},
+                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng",      "account_rk", "left"},
+                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "account_rk", "left"},
+                {"EMART JOB 2", "prod_dds.installment", "parent_account_rk",    "prod_dds.financial_account_chng",      "account_rk", "left"},
+                {"EMART JOB 2", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "parent_account_rk", "left"}
         }));
 
         ArrayList<Table> res = engine.getTablesWithMoreThanOneColumn();
@@ -27,11 +27,11 @@ public class TestCutEngine extends BaseTest {
     @Test
     public void testGetTables() {
         CutEngine engine = new CutEngine(m_client, m_namespace, Utils.loadRelationsFromArray(new String [][] {
-                {"EMART JOB 1", "prod_dds.installment", "installment_rk",       "prod_dds.installment",                 "installment_rk"},
-                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng",      "account_rk"},
-                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "account_rk"},
-                {"EMART JOB 2", "prod_dds.installment", "parent_account_rk",    "prod_dds.financial_account_chng",      "account_rk"},
-                {"EMART JOB 2", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "account_rk"}
+                {"EMART JOB 1", "prod_dds.installment", "installment_rk",       "prod_dds.installment",                 "installment_rk", "inner"},
+                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng",      "account_rk", "left"},
+                {"EMART JOB 1", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "account_rk", "left"},
+                {"EMART JOB 2", "prod_dds.installment", "parent_account_rk",    "prod_dds.financial_account_chng",      "account_rk", "left"},
+                {"EMART JOB 2", "prod_dds.installment", "account_rk",           "prod_dds.financial_account_chng_bal",  "account_rk", "left"}
         }));
 
         ArrayList<Table> res = engine.getTables();

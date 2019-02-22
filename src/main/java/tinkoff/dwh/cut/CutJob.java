@@ -46,30 +46,58 @@ public class CutJob {
 
 //        addNewLinks(columnNames, rows);
 
+        System.out.println("[cut " + m_jobName + "].AddTable " + values.getTable() + " -> " + values.getRowsCnt() + " new rows");
         for (ColumnValues columnValues: values.getColumnsValues()) {
-            addNewKeys(columnValues);
+            addNewKeys(columnValues, 0);
         }
 
         m_processedTables.add(values.getTable().getTableName());
     }
 
     // Добавить новые ключи реукрсивно с учетом поиска в таблицах связей
-    public void addNewKeys(ColumnValues values) {
+    public void addNewKeys(ColumnValues values, int recurseNum) {
 
-        ColumnValues newValues = m_keys.addValues(values);
-        if (newValues.getValues().size() == 0) return;
+        Column prmColumn = values.getColumn();
+
+        // оставляем только те, ключи, которых нет в копилке
+        values.getValues().removeAll(m_keys.getValues(prmColumn));
+        if (values.getValues().size() == 0) return;
+
+        String blanks = new String(new char[recurseNum+1]).replace("\0", ">");
+        System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + values.getValues().size() + " new keys");
+
+        // TODO: Это жесткий HACK - переделать на анализ связи из relation
+        // TODO: связи нужно анализизовать для каждой линктэбле отдельно и оставлять ключи если хотя бы с одной правой пересекся ключ
+        boolean anykey_flg = false;         // Признак того, что нужно тянуть любые ключ
+        if (values.getColumn() == new Column("prod_dds.installment", "installment_rk"))
+            anykey_flg = true;
+        if (anykey_flg) { // В копилку нужно положить все вошедшие ключи в независимости ни от чего
+            m_keys.getValues(prmColumn).addAll(values.getValues());    // добавляем эти ключи
+            System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + values.getValues().size() + " new keys [ADDED]");
+        }
 
         ColumnsValues newLookupColumnsValues = new ColumnsValues();
         for (CutLinkTable linkTable : m_cutLinkTables) {
-            for (Column column : m_keys.getSingleKey(newValues.getColumn()).getColumns()) {
+            for (Column column : m_keys.getSingleKey(prmColumn).getColumns()) {
                 if (linkTable.getTable().getColumns().contains(column)) {
-                    newLookupColumnsValues.add(linkTable.lookup(column, newValues.getValues()));
+                    ColumnsValues linkedValues = linkTable.lookup(column, values.getValues());
+
+                    // TODO: Ключи которые пришли по рекурсии из поиска определенной таблицы не должны опять улетать в эту таблицу в поиск
+
+                    if (!anykey_flg) { // в копилку нужно положить только ключи, которые пересекаются по таблице связок
+                        m_keys.getValues(prmColumn).addAll(linkedValues.getValues(column));
+                        System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + (values.getValues().size() - linkedValues.getValues(column).size()) + " new keys [TRASHED]");
+                        System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + linkedValues.getValues(column).size() + " new keys [ADDED]");
+                    }
+                    linkedValues.removeColumn(column);
+
+                    newLookupColumnsValues.add(linkedValues);
                 }
             }
         }
 
         for (ColumnValues newLookupColumnValues : newLookupColumnsValues.getValues())
-            addNewKeys(newLookupColumnValues);
+            addNewKeys(newLookupColumnValues, recurseNum+1);
     }
 
     public ArrayList<CutLinkTable> getCutLinkTables() {

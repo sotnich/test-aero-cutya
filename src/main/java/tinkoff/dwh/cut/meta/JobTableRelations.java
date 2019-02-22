@@ -6,7 +6,6 @@ public class JobTableRelations {
 
     ArrayList<TableRelation> m_relations = new ArrayList<TableRelation>();  // Все отношения
     ArrayList<SingleKey> m_singleKeys = new ArrayList<SingleKey>();         // Все SingleKey из отношений
-    ArrayList<Column> m_columns = new ArrayList<Column>();                  // Все колонки из отношений
     ArrayList<Table> m_tables = new ArrayList<Table>();                     // Все таблицы из отношений
 
     public JobTableRelations(ArrayList<TableRelation> relations) {
@@ -18,14 +17,7 @@ public class JobTableRelations {
     // Массив вида table_from, column_from, table_to, column_to
     public JobTableRelations(String [][] relations) {
         for (int i = 0; i < relations.length; i++)
-            addRelation(new TableRelation(new Column(relations[i][0], relations[i][1]), new Column(relations[i][2], relations[i][3])));
-    }
-
-    private void addColumn(TableRelation relation) {
-        for (Column column : relation.getColumns()) {
-            if (!m_columns.contains(column))
-                m_columns.add(column);
-        }
+            addRelation(new TableRelation(new Column(relations[i][0], relations[i][1]), new Column(relations[i][2], relations[i][3]), relations[i][4]));
     }
 
     private void addSingleKey(TableRelation relation) {
@@ -61,7 +53,6 @@ public class JobTableRelations {
         if (!m_relations.contains(relation))
             m_relations.add(relation);
         addSingleKey(relation);
-        addColumn(relation);
         addTable(relation);
     }
 

@@ -30,12 +30,17 @@ public class TestCutLink extends BaseTest {
         installment.addRow(getKeyValues(tableName,"account_rk", "102", "installment_rk", "203"));
         installment.addRow(getKeyValues(tableName,"account_rk", "103", "installment_rk", "204"));
 
-        ColumnsValues res = installment.lookup(new Column(tableName, "account_rk"),
-                Arrays.asList("101", "102", "103", "104"));
-        List<String> etalon = Arrays.asList("201", "202", "203", "204");
+        Column accnCol = new Column(tableName, "account_rk");
+        Column instCol = new Column(tableName, "installment_rk");
 
-        Assert.assertEquals(res.getColumns().size(), 1);
-        assertArrays(getAllKeyValueValues(res), etalon);
+        ColumnsValues res = installment.lookup(accnCol, Arrays.asList("101", "101", "102", "103", "104"));
+
+        List<String> etalonInst = Arrays.asList("201", "202", "203", "204");
+        List<String> etalonAccn = Arrays.asList("101", "102", "103");
+
+        Assert.assertEquals(res.getColumns().size(), 2);
+        assertArrays(res.getValues(accnCol), etalonAccn);
+        assertArrays(res.getValues(instCol), etalonInst);
 
         deleteTable(tableName);
     }
@@ -55,11 +60,14 @@ public class TestCutLink extends BaseTest {
         Record accnRec = m_client.get(null, new Key(m_namespace, tableName, "ACCN100"));
         Record instRec = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
 
-        Assert.assertEquals(accnRec.bins.size(), 1);
-        Assert.assertEquals(instRec.bins.size(), 1);
+        Assert.assertEquals(accnRec.bins.size(), 2);
+        Assert.assertEquals(instRec.bins.size(), 2);
 
         assertArrays((ArrayList<String>) accnRec.getValue("installment_rk"), "210");
+        Assert.assertEquals("100", accnRec.getString("account_rk"));
+
         assertArrays((ArrayList<String>) instRec.getValue("account_rk"), "100");
+        Assert.assertEquals("210", instRec.getString("installment_rk"));
 
         deleteTable(tableName);
     }
@@ -83,15 +91,22 @@ public class TestCutLink extends BaseTest {
         Record instRec2 = m_client.get(null, new Key(m_namespace, tableName, "INST211"));
         Record instRec3 = m_client.get(null, new Key(m_namespace, tableName, "INST212"));
 
-        Assert.assertEquals(accnRec.bins.size(), 1);
-        Assert.assertEquals(instRec1.bins.size(), 1);
-        Assert.assertEquals(instRec2.bins.size(), 1);
-        Assert.assertEquals(instRec3.bins.size(), 1);
+        Assert.assertEquals(accnRec.bins.size(), 2);
+        Assert.assertEquals(instRec1.bins.size(), 2);
+        Assert.assertEquals(instRec2.bins.size(), 2);
+        Assert.assertEquals(instRec3.bins.size(), 2);
 
         assertArrays((ArrayList<String>) accnRec.getValue("installment_rk"), "210", "211", "212");
+        Assert.assertEquals("100", accnRec.getString("account_rk"));
+
         assertArrays((ArrayList<String>) instRec1.getValue("account_rk"), "100");
+        Assert.assertEquals("210", instRec1.getString("installment_rk"));
+
         assertArrays((ArrayList<String>) instRec2.getValue("account_rk"), "100");
+        Assert.assertEquals("211", instRec2.getString("installment_rk"));
+
         assertArrays((ArrayList<String>) instRec3.getValue("account_rk"), "100");
+        Assert.assertEquals("212", instRec3.getString("installment_rk"));
 
         deleteTable(tableName);
     }
@@ -116,15 +131,21 @@ public class TestCutLink extends BaseTest {
         Record instRec1 = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
         Record instRec2 = m_client.get(null, new Key(m_namespace, tableName, "INST211"));
 
-        Assert.assertEquals(accnRec1.bins.size(), 1);
-        Assert.assertEquals(accnRec2.bins.size(), 1);
-        Assert.assertEquals(instRec1.bins.size(), 1);
-        Assert.assertEquals(instRec2.bins.size(), 1);
+        Assert.assertEquals(accnRec1.bins.size(), 2);
+        Assert.assertEquals(accnRec2.bins.size(), 2);
+        Assert.assertEquals(instRec1.bins.size(), 2);
+        Assert.assertEquals(instRec2.bins.size(), 2);
 
         assertArrays((ArrayList<String>) accnRec1.getValue("installment_rk"), "210", "211");
         assertArrays((ArrayList<String>) accnRec2.getValue("installment_rk"), "210", "211");
         assertArrays((ArrayList<String>) instRec1.getValue("account_rk"), "100", "101");
         assertArrays((ArrayList<String>) instRec2.getValue("account_rk"), "100", "101");
+
+        Assert.assertEquals("100", accnRec1.getString("account_rk"));
+        Assert.assertEquals("101", accnRec2.getString("account_rk"));
+        Assert.assertEquals("210", instRec1.getString("installment_rk"));
+        Assert.assertEquals("211", instRec2.getString("installment_rk"));
+
 
         deleteTable(tableName);
     }
@@ -146,9 +167,6 @@ public class TestCutLink extends BaseTest {
 
         Record accnRec = m_client.get(null, new Key(m_namespace, tableName, "ACCN100"));
         Record instRec = m_client.get(null, new Key(m_namespace, tableName, "INST210"));
-
-        Assert.assertEquals(accnRec.bins.size(), 1);
-        Assert.assertEquals(instRec.bins.size(), 1);
 
         assertArrays((ArrayList<String>) accnRec.getValue("installment_rk"), "210");
         assertArrays((ArrayList<String>) instRec.getValue("account_rk"), "100");

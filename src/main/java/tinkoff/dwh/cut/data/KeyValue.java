@@ -34,6 +34,11 @@ public class KeyValue {
         return ret;
     }
 
+    @Override
+    public String toString() {
+        return m_key + "->" + m_value;
+    }
+
     public static ArrayList<KeyValue> fromArray(ArrayList<Column> columns, String ... values) {
         ArrayList<KeyValue> res = new ArrayList<KeyValue>();
         for (int i = 0; i < columns.size(); i++)

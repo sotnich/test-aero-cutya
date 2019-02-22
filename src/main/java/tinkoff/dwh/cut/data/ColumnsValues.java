@@ -31,6 +31,10 @@ public class ColumnsValues {
         return new ArrayList<Column>(m_columnsWighValues.keySet());
     }
 
+    public void removeColumn(Column column) {
+        m_columnsWighValues.remove(column);
+    }
+
     public ArrayList<String> getValues(Column column) {
         return m_columnsWighValues.get(column);
     }

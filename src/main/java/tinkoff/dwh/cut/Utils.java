@@ -2,6 +2,8 @@ package tinkoff.dwh.cut;
 
 import com.aerospike.client.*;
 import com.aerospike.client.policy.ScanPolicy;
+import tinkoff.dwh.cut.data.ColumnValues;
+import tinkoff.dwh.cut.data.ColumnsValues;
 import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.TableValues;
 import tinkoff.dwh.cut.meta.Column;
@@ -12,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class Utils {
@@ -39,6 +42,28 @@ public class Utils {
         catch (Exception e) {
             e.printStackTrace();
         }
+        return ret;
+    }
+
+//    public static ColumnsValues getColumnValues(Table table, ArrayList<String> lines) {
+//        HashSet<ColumnsValues> ret = new HashSet<ColumnValues>();
+//        for (String line : lines) {
+//            String [] values = line.split("\\;",-1);
+//            for (int i = 0; i < values.length; i++)
+//                for (int j = 0; j < values.length; j++)
+//                    if (i != j) {
+//
+//                    }
+//        }
+//    }
+
+    public static TableValues getTableValues(String tableName, ArrayList<String> fileLines, int offset, int numCnt) {
+        TableValues ret = new TableValues(new Table(tableName, fileLines.get(0).split(";")));
+
+        for (int i = offset; i < Math.min(offset + numCnt, fileLines.size()); i++ ) {
+            ret.addRow(fileLines.get(i).split("\\;",-1));
+        }
+
         return ret;
     }
 
@@ -87,7 +112,7 @@ public class Utils {
                 String jobName = fields[0];
                 if (!ret.containsKey(jobName))
                     ret.put(jobName, new ArrayList<TableRelation>());
-                ret.get(jobName).add(new TableRelation(new Column(fields[1], fields[2]), new Column(fields[3], fields[4])));
+                ret.get(jobName).add(new TableRelation(new Column(fields[1], fields[2]), new Column(fields[3], fields[4]), fields[5]));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,7 +126,7 @@ public class Utils {
             String jobName = row[0];
             if (!ret.containsKey(jobName))
                 ret.put(jobName, new ArrayList<TableRelation>());
-            ret.get(jobName).add(new TableRelation(new Column(row[1], row[2]), new Column(row[3], row[4])));
+            ret.get(jobName).add(new TableRelation(new Column(row[1], row[2]), new Column(row[3], row[4]), row[5]));
 
         }
         return ret;
@@ -150,15 +175,15 @@ public class Utils {
         @SuppressWarnings("unchecked")
         public void scanCallback(Key key, Record record) {
 
-            long cntKey = 0L;
-            for (String binName : record.bins.keySet()) {
-                ArrayList<String> vals = (ArrayList<String>) record.getValue(binName);
-                cntKey += vals.size();
-            }
-
-            if (!m_cntCnt.containsKey(cntKey))
-                m_cntCnt.put(cntKey, 0L);
-            m_cntCnt.put(cntKey, m_cntCnt.get(cntKey) + 1);
+//            long cntKey = 0L;
+//            for (String binName : record.bins.keySet()) {
+//                ArrayList<String> vals = (ArrayList<String>) record.getValue(binName);
+//                cntKey += vals.size();
+//            }
+//
+//            if (!m_cntCnt.containsKey(cntKey))
+//                m_cntCnt.put(cntKey, 0L);
+//            m_cntCnt.put(cntKey, m_cntCnt.get(cntKey) + 1);
 
             recordCount++;
         }

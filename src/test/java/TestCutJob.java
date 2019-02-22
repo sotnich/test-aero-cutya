@@ -13,9 +13,9 @@ public class TestCutJob extends BaseTest {
 
         CutJob job = new CutJob(m_client, m_namespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
                 new CutEngine(m_client, m_namespace, Utils.loadRelationsFromArray(new String [][] {
-                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
-                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
-                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk", "left"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk", "left"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk", "left"}
                 })));
 
         // Проверяем что создалась ровно одна таблица для трансляции ключей
@@ -30,9 +30,9 @@ public class TestCutJob extends BaseTest {
 
         CutJob job = new CutJob(m_client, m_namespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A",
                 new CutEngine(m_client, m_namespace, Utils.loadRelationsFromArray(new String [][] {
-                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk"},
-                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk"},
-                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk"}
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "installment_rk",  "prod_dds.installment",                 "installment_rk", "left"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng",      "account_rk", "left"},
+                        {"EMART 1 LOAD ACCOUNT INSTALLMENT A", "prod_dds.installment", "account_rk",      "prod_dds.financial_account_chng_bal",  "account_rk", "left"}
                 })));
 
         CutLinkTable installment = job.getCutLinkTables().get(0);
@@ -54,7 +54,7 @@ public class TestCutJob extends BaseTest {
 
         job.putTable(vals);
 
-        ArrayList<String> etalonAccs = new ArrayList<String>(Arrays.asList("111", "101", "102"));
+        ArrayList<String> etalonAccs = new ArrayList<String>(Arrays.asList("101", "102"));
         ArrayList<String> etalonInts = new ArrayList<String>(Arrays.asList("201", "202", "203"));
         ArrayList<String> keysAccs = new ArrayList<String>(job.getKeys().getValues((new Column("prod_dds.installment", "account_rk"))));
         ArrayList<String> keysInst = new ArrayList<String>(job.getKeys().getValues((new Column("prod_dds.installment", "installment_rk"))));

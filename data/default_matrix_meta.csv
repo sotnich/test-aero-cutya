@@ -1,4 +1,4 @@
-job_name,table_from,column_from,table_to,column_to
-EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,installment_rk,prod_dds.installment,installment_rk
-EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,account_rk,prod_dds.financial_account_chng,account_rk
-EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,account_rk,prod_dds.financial_account_chng_bal,account_rk
+job_name,table_from,column_from,table_to,column_to, type
+EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,installment_rk,prod_dds.installment,installment_rk, left
+EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,account_rk,prod_dds.financial_account_chng,account_rk, left
+EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,account_rk,prod_dds.financial_account_chng_bal,account_rk, left
