@@ -1,4 +1,9 @@
 job_name,table_from,column_from,table_to,column_to, type
-EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,installment_rk,prod_dds.installment,installment_rk, left
-EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,account_rk,prod_dds.financial_account_chng,account_rk, left
-EMART 1 LOAD ACCOUNT INSTALLMENT A,prod_dds.installment,account_rk,prod_dds.financial_account_chng_bal,account_rk, left
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_claim,id,prod_ods_ti_gw.cc_claimcontact,claimid,inner
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_claimcontact,id,prod_ods_ti_gw.cc_claimcontactrole,claimcontactid,inner
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_claimcontact,contactid,prod_ods_ti_gw.cc_contact,id,inner
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_claimcontactrole,role,prod_ods_ti_gw.cctl_contactrole,id,inner
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_claim,publicid,prod_ods_ti_gw.cc_claim,publicid,group
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_contact,addressbookuid,prod_ods_ti_gw.cc_contact,addressbookuid,group
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cctl_contactrole,typecode,prod_ods_ti_gw.cctl_contactrole,typecode,group
+DDS LOAD CLAIM X PARTY,prod_ods_ti_gw.cc_contact,addressbookuid,prod_ods_ti_gw.cc_contact,addressbookuid,group

@@ -89,12 +89,13 @@ public class Utils {
         String cvsSplitBy = ";";
         try {
             BufferedReader br = new BufferedReader(new FileReader(csvFile));
-            br.readLine().split(cvsSplitBy);
+            Table loadTable = new Table(linkTable.getTable().getTableName(), br.readLine().split(cvsSplitBy));
 
             while ((line = br.readLine()) != null) {
-                linkTable.addRow(KeyValue.fromArray(columns, line.split("\\;",-1)));
+                linkTable.addRow(KeyValue.fromArray(loadTable.getColumns(), line.split("\\;",-1)));
             }
         } catch (Exception e) {
+            System.out.println(line);
             e.printStackTrace();
         }
     }
@@ -115,6 +116,7 @@ public class Utils {
                 ret.get(jobName).add(new TableRelation(new Column(fields[1], fields[2]), new Column(fields[3], fields[4]), fields[5]));
             }
         } catch (Exception e) {
+            System.out.println(line);
             e.printStackTrace();
         }
         return ret;
