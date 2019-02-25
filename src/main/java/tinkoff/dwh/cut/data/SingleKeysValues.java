@@ -1,5 +1,6 @@
 package tinkoff.dwh.cut.data;
 
+import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.SingleKey;
 
@@ -26,10 +27,8 @@ public class SingleKeysValues {
         return m_values.get(getSingleKey(column));
     }
 
-    public void addValuesAndRemoveExisting(ColumnValues values, boolean add_flg) {
-        Set<String> curValues = getValues(values.getColumn());
-        values.getValues().removeAll(curValues);                    // Удаляем в новых те, которые уже есть
-        if (add_flg)
-            curValues.addAll(values.getValues());
+    public void addLinkTable(CutLinkTable linkTable) {
+        for (SingleKey singleKey : m_values.keySet())
+            singleKey.AddLinkTable(linkTable);
     }
 }

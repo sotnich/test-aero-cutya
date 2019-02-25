@@ -83,6 +83,12 @@ public class Utils {
         return null;
     }
 
+    public static void initLinkTable(CutLinkTable linkTable, String [][] values) {
+        Table loadTable = new Table(linkTable.getTable().getTableName(), values[0]);
+        for (int i = 1; i < values.length; i++)
+            linkTable.addRow(KeyValue.fromArray(loadTable.getColumns(), values[i]));
+    }
+
     public static void loadFromCSV(CutLinkTable linkTable, String csvFile) {
         ArrayList<Column> columns = linkTable.getTable().getColumns();
         String line = "";

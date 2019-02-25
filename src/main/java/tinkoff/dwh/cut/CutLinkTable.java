@@ -59,14 +59,12 @@ public class CutLinkTable {
                 List<String> subList = prmValuesD.subList(i * batchSize, Math.min(prmValuesD.size(), ((i + 1) * batchSize) + 1) );
                 threads[i] = new ColumnsValuesLoaderThread(prm, subList, this);
                 threads[i].start();
-//                System.out.println("[lookup thread " + i + " start");
             }
 
             ColumnsValues ret = new ColumnsValues();
             try {
                 for (int i = 0; i < threadCnt; i++) {
                     threads[i].join();
-//                    System.out.println("[lookup thread " + i + " finish");
                     ret.add(threads[i].getValues());
                 }
             }

@@ -14,7 +14,7 @@ public class JobTableRelations {
         }
     }
 
-    // Массив вида table_from, column_from, table_to, column_to
+    // Массив вида table_from, column_from, table_to, column_to, type
     public JobTableRelations(String [][] relations) {
         for (int i = 0; i < relations.length; i++)
             addRelation(new TableRelation(new Column(relations[i][0], relations[i][1]), new Column(relations[i][2], relations[i][3]), relations[i][4]));

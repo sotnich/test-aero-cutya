@@ -9,11 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BaseTest {
-//    String m_aerospikeHost = "178.128.134.224";
-//    String m_namespace = "test2";
+    String m_aerospikeHost = "178.128.134.224";
+    String m_namespace = "test";
 
-    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
-    String m_namespace = "ssd";
+//    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
+//    String m_namespace = "ssd";
 
     AerospikeClient m_client;
 

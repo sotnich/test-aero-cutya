@@ -1,6 +1,5 @@
 import com.aerospike.client.AerospikeClient;
 import org.apache.commons.cli.*;
-import sun.nio.ch.Util;
 import tinkoff.dwh.cut.CutEngine;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
@@ -14,6 +13,7 @@ public class Main {
     private static String m_aerospikeHost = "localhost";
     private static String m_namespace = "test";
     private static String m_method = "init";
+    private static String m_job = "";
     private static AerospikeClient m_client;
     private static CutEngine m_engine;
 
@@ -33,13 +33,13 @@ public class Main {
     }
 
     private static void cut() {
-        for (Table table : m_engine.getTables()) {
+        for (Table table : m_engine.getTables(m_job)) {
             cutTable(table);
         }
     }
 
     private static void init() {
-        for (Table table : m_engine.getTablesWithMoreThanOneColumn()) {
+        for (Table table : m_engine.getTablesWithMoreThanOneColumn(m_job)) {
             initTable(table);
         }
     }
@@ -87,6 +87,7 @@ public class Main {
         options.addOption(new Option("h", "host", true, "aerospike host"));
         options.addOption(new Option("n", "namespace", true, "aerospike namespace"));
         options.addOption(new Option("m", "method", true, "method to execute"));
+        options.addOption(new Option("j", "job", true, "job"));
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -98,6 +99,8 @@ public class Main {
             String host = cmd.getOptionValue("host");
             String namespace = cmd.getOptionValue("namespace");
             String method = cmd.getOptionValue("method");
+            String job = cmd.getOptionValue("job");
+
 
             if (host != null)
                 m_aerospikeHost = host;
@@ -105,6 +108,8 @@ public class Main {
                 m_namespace = namespace;
             if (method != null)
                 m_method = method;
+            if (job != null)
+                m_job = job;
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             formatter.printHelp("aero-test", options);

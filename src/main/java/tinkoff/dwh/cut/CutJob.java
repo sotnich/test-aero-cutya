@@ -21,17 +21,21 @@ public class CutJob {
     private Set<String> m_processedTables = new HashSet<String>();                                      // Список входных таблиц которые отдали свои данные и эти данные уже обработали здесь
     private ArrayList<CutLinkTable> m_cutLinkTables = new ArrayList<CutLinkTable>();                    // Таблицы связки ключей друг с другом
 
-    public CutJob(AerospikeClient client, String aerospikeNamespace, String jobName, CutEngine cutEngine) {
+    public CutJob(AerospikeClient client, String namespace, String jobName, CutEngine cutEngine) {
         m_jobName = jobName;
         m_cutEngine = cutEngine;
         m_client = client;
-        m_aerospikeNamespace = aerospikeNamespace;
+        m_aerospikeNamespace = namespace;
 
         m_keys = new SingleKeysValues(m_cutEngine.getJobRelations(m_jobName).getSingleKeys());
 
         // Для таблиц с более одной колонкой создаем таблицу-связку в Aerospike
         for (Table table : m_cutEngine.getJobRelations(m_jobName).getTablesWithMoreThanOneColumn()) {
-            m_cutLinkTables.add(new CutLinkTable(m_client, m_aerospikeNamespace, table));
+            CutLinkTable linkTable = new CutLinkTable(m_client, m_aerospikeNamespace, table);
+            m_cutLinkTables.add(linkTable);
+            m_keys.addLinkTable(linkTable);
+
+            // key1 left join key2 left join key3
         }
     }
 
@@ -57,6 +61,12 @@ public class CutJob {
     // Добавить новые ключи реукрсивно с учетом поиска в таблицах связей
     public void addNewKeys(ColumnValues values, int recurseNum) {
 
+
+        // TODO: Надо научиться обрабатывать рекурсивные left связи key1 jeft join key2 left join key3
+        // Сейчас ключи key2 могут попасть в копилку безусловно из-за связи key2 left join key3
+        // А по хорошему ключи key2 должны проверится на связи key1 left join key2
+        // Скорее всего логику нужно выносить в класс SingleKey и туда же выносить linkTables
+
         Column prmColumn = values.getColumn();
 
         // оставляем только те, ключи, которых нет в копилке
@@ -66,12 +76,12 @@ public class CutJob {
         String blanks = new String(new char[recurseNum+1]).replace("\0", ">");
         System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + values.getValues().size() + " new keys");
 
-        // TODO: Это жесткий HACK - переделать на анализ связи из relation
-        // TODO: связи нужно анализизовать для каждой линктэбле отдельно и оставлять ключи если хотя бы с одной правой пересекся ключ
-        boolean anykey_flg = false;         // Признак того, что нужно тянуть любые ключ
-        if (values.getColumn() == new Column("prod_dds.installment", "installment_rk"))
-            anykey_flg = true;
-        if (anykey_flg) { // В копилку нужно положить все вошедшие ключи в независимости ни от чего
+//        boolean anykey_flg = false;         // Признак того, что нужно тянуть любые ключ
+//        if (values.getColumn() == new Column("prod_dds.installment", "installment_rk"))
+//            anykey_flg = true;
+//
+//
+        if (prmColumn.isActiveFlg()) { // В копилку нужно положить все вошедшие ключи в независимости ни от чего
             m_keys.getValues(prmColumn).addAll(values.getValues());    // добавляем эти ключи
             System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + values.getValues().size() + " new keys [ADDED]");
         }
@@ -80,11 +90,12 @@ public class CutJob {
         for (CutLinkTable linkTable : m_cutLinkTables) {
             for (Column column : m_keys.getSingleKey(prmColumn).getColumns()) {
                 if (linkTable.getTable().getColumns().contains(column)) {
+
                     ColumnsValues linkedValues = linkTable.lookup(column, values.getValues());
 
                     // TODO: Ключи которые пришли по рекурсии из поиска определенной таблицы не должны опять улетать в эту таблицу в поиск
 
-                    if (!anykey_flg) { // в копилку нужно положить только ключи, которые пересекаются по таблице связок
+                    if (!prmColumn.isActiveFlg()) { // в копилку нужно положить только ключи, которые пересекаются по таблице связок
                         m_keys.getValues(prmColumn).addAll(linkedValues.getValues(column));
                         System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + (values.getValues().size() - linkedValues.getValues(column).size()) + " new keys [TRASHED]");
                         System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + linkedValues.getValues(column).size() + " new keys [ADDED]");
