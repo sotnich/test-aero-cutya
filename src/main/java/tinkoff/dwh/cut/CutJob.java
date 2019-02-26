@@ -40,18 +40,25 @@ public class CutJob {
     }
 
     private void addNewLinks(TableValues values) {
-        if (values.getTable().getColumns().size() <= 1) return;
-        // TODO: добавить добавление новых связей напрямую в Aerospike
+        for (CutLinkTable table : m_cutLinkTables)
+            if (table.getTable().getTableName().equals(values.getTable().getTableName())) {
+                System.out.println("[cut " + m_jobName + "].addNewLinks " + values.getTable() + " -> " + values.getRowsCnt() + " new rows");
+                table.addTableValues(values);
+            }
     }
 
     // Добавить очередной инкремент
     // TODO: Может приходить больше колонок чем нужно - нужно убедиться что они не обрабатываются напрасно
     public void putTable(TableValues values) {
 
-//        addNewLinks(columnNames, rows);
+        System.out.println("[cut " + m_jobName + "].putTable " + values.getTable() + " -> " + values.getRowsCnt() + " new rows");
 
-        System.out.println("[cut " + m_jobName + "].AddTable " + values.getTable() + " -> " + values.getRowsCnt() + " new rows");
+        // TODO: Возможно, не эффективно, возможно, лучше сохранить эти записи в кэше, а записать в таблицы связок потом
+        addNewLinks(values);
+
         for (ColumnValues columnValues: values.getColumnsValues()) {
+
+            // TODO: по хорошему все новые ключи из таблицы связей нужно записать в копилку без условий
             addNewKeys(columnValues, 0);
         }
 

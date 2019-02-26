@@ -105,10 +105,9 @@ public class TestCutJob extends BaseTest {
     @Test
     public void testPutNextTableInc_one_left_table() {
 
-        String tableName = "prod_dds.installment";
         CutJob job = new CutJob(m_client, m_namespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A", m_engine);
 
-        TableValues vals = Utils.getTableValues("prod_dds.financial_account_chng", new String [][] {
+        TableValues vals = Utils.getTableValues("prod_dds.installment", new String [][] {
                 {"account_rk", "installment_rk"},
                 {"108", "220"},
                 {"109", "230"},
@@ -130,10 +129,9 @@ public class TestCutJob extends BaseTest {
     @Test
     public void testPutNextTableInc_one_left_table_with_revers() {
 
-        String tableName = "prod_dds.installment";
         CutJob job = new CutJob(m_client, m_namespace, "EMART 1 LOAD ACCOUNT INSTALLMENT A", m_engine);
 
-        TableValues vals = Utils.getTableValues("prod_dds.financial_account_chng", new String [][] {
+        TableValues vals = Utils.getTableValues("prod_dds.installment", new String [][] {
                 {"account_rk", "installment_rk"},
                 {"108", "201"},
         });
