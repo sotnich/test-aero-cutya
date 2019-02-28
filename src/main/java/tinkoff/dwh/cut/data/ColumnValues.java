@@ -17,6 +17,11 @@ public class ColumnValues {
         m_values = new ArrayList<String>(new HashSet<String>(values));  // Дедубликация
     }
 
+    public ColumnValues(Column column, HashSet<String> values) {
+        m_column = column;
+        m_values = new ArrayList<String>(values);  // Дедубликация
+    }
+
     public ColumnValues(Column column) {
         m_column = column;
         m_values = new ArrayList<String>();

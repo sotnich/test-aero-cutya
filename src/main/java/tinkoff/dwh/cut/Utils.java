@@ -12,10 +12,7 @@ import tinkoff.dwh.cut.meta.TableRelation;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class Utils {
     public static TableValues getTableValues(String tableName, String [][] vals) {
@@ -45,17 +42,88 @@ public class Utils {
         return ret;
     }
 
-//    public static ColumnsValues getColumnValues(Table table, ArrayList<String> lines) {
-//        HashSet<ColumnsValues> ret = new HashSet<ColumnValues>();
-//        for (String line : lines) {
-//            String [] values = line.split("\\;",-1);
-//            for (int i = 0; i < values.length; i++)
-//                for (int j = 0; j < values.length; j++)
-//                    if (i != j) {
-//
-//                    }
-//        }
-//    }
+    //Class that extends Comparator
+    static class ColumnComparator implements Comparator
+    {
+        int columnToSort;
+        ColumnComparator(int columnToSort) {
+            this.columnToSort = columnToSort;
+        }
+        //overriding compare method
+        public int compare(Object o1, Object o2) {
+            String[] row1 = (String[]) o1;
+            String[] row2 = (String[]) o2;
+            //compare the columns to sort
+            return row1[columnToSort].compareTo(row2[columnToSort]);
+        }
+    }
+
+    public static ColumnValues getSingleColumnValues(Table table, ArrayList<String> lines) {
+        Column prmColumn = new Column(table.getTableName(), lines.get(0));
+        lines.remove(0);
+        return new ColumnValues(prmColumn, lines);
+
+    }
+
+    // Для каждого ключа формируем набор значений
+    public static HashMap<Column, HashMap<String, ColumnsValues>> getColumnValues(Table table, ArrayList<String> lines) {
+        HashMap<Column, HashMap<String, ColumnsValues>> ret = new HashMap<Column, HashMap<String, ColumnsValues>>();
+
+        String [] columnNames = lines.get(0).split("\\;",-1);
+        Column [] columns  = new Column[columnNames.length];
+        for (int i = 0; i < columnNames.length; i++)
+            columns[i] = new Column(table.getTableName(), columnNames[i]);
+
+        String[][] aValues = new String[lines.size() - 1][];
+        for (int i = 1; i < lines.size(); i++)
+            aValues[i - 1] = lines.get(i).split("\\;", -1);
+
+        for (int colNum = 0; colNum < columns.length; colNum++) {
+            Arrays.sort(aValues, new ColumnComparator(colNum));
+            Column prmColumn = columns[colNum];
+            int i = 0;
+            HashSet<String>[] values = new HashSet[columns.length - 1];
+            Column[] secColumns = new Column[columns.length - 1];
+            for (int j = 0; j < columns.length; j++) {
+                int c = j < colNum ? j : j - 1;
+                if (j != colNum) {
+                    secColumns[c] = columns[j];
+                }
+            }
+            if (!ret.containsKey(prmColumn))
+                ret.put(prmColumn, new HashMap<String, ColumnsValues>());
+            HashMap<String, ColumnsValues> retColumnArray = ret.get(prmColumn);
+
+            while (i < aValues.length) {
+
+                String prmColValue = aValues[i][colNum];
+                boolean finish = false;
+                for (int k = 0; k < values.length; k++)
+                    values[k] = new HashSet<String>();
+
+                while (i < aValues.length && !finish) {
+
+                    for (int j = 0; j < columns.length; j++) {
+                        int c = j < colNum ? j : j - 1;
+                        if (j != colNum)
+                            values[c].add(aValues[i][j]);
+                    }
+
+                    if (i + 1 < aValues.length && aValues[i + 1][colNum].equals(prmColValue))
+                        i++;
+                    else
+                        finish = true;
+                }
+
+                ColumnsValues colsVals = new ColumnsValues(secColumns, values);
+                retColumnArray.put(prmColValue, colsVals);
+
+                i++;
+            }
+        }
+
+        return ret;
+    }
 
     public static TableValues getTableValues(String tableName, ArrayList<String> fileLines, int offset, int numCnt) {
         TableValues ret = new TableValues(new Table(tableName, fileLines.get(0).split(";")));
@@ -228,5 +296,16 @@ public class Utils {
         int seconds = Math.round((currentTime - m_beforeTime)/1000);
         long millis = (currentTime - m_beforeTime) - seconds * 1000;
         System.out.println("[" + m_method + "] - finish in " + seconds + " secs and " + millis + " millisecs");
+    }
+
+    public static ColumnsValues getColumnsValues(HashMap<Column, HashMap<String, ColumnsValues>> values) {
+        ColumnsValues ret = new ColumnsValues();
+        for (Column prmColumn : values.keySet()) {
+            Set<String> prmValues = values.get(prmColumn).keySet();
+            ret.addColumnValues(prmColumn, prmValues);
+            for (ColumnsValues cv : values.get(prmColumn).values())
+                ret.add(cv);
+        }
+        return ret;
     }
 }

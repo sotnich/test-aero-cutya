@@ -39,6 +39,13 @@ public class CutJob {
         }
     }
 
+    private CutLinkTable getCutLink(Table table) {
+        for (CutLinkTable linkTable : m_cutLinkTables)
+            if (linkTable.getTable().getTableName().equals(table.getTableName()))
+                return linkTable;
+        return null;
+    }
+
     private void addNewLinks(TableValues values) {
         for (CutLinkTable table : m_cutLinkTables)
             if (table.getTable().getTableName().equals(values.getTable().getTableName())) {
@@ -49,12 +56,43 @@ public class CutJob {
 
     // Добавить очередной инкремент
     // TODO: Может приходить больше колонок чем нужно - нужно убедиться что они не обрабатываются напрасно
+    public void putTable(Table table, HashMap<Column, HashMap<String, ColumnsValues>> values) {
+
+        // TODO: Возможно, эффективнее сохранить эти записи в кэше, а записать в таблицы связок потом
+        // Добавить новые значения
+        CutLinkTable linkTable = getCutLink(table);
+        if (linkTable != null)
+            for (Column column : values.keySet())
+                linkTable.addValues(column, values.get(column));
+
+        ColumnsValues newValues = Utils.getColumnsValues(values);
+        System.out.println("[cut " + m_jobName + "].putTable " + table + " -> " + newValues.getSize() + " new keys");
+
+        // TODO: по хорошему все новые ключи из таблицы связей нужно записать в копилку без условий
+        for (ColumnValues columnValues: newValues.getValues()) {
+            addNewKeys(columnValues, 0);
+        }
+
+        m_processedTables.add(table.getTableName());
+    }
+
+    public void putSingleColumn(Table table, ColumnValues values) {
+
+        System.out.println("[cut " + m_jobName + "].putSingleColumn " + table + " -> " + values.getValues().size() + " new keys");
+        addNewKeys(values, 0);
+
+        m_processedTables.add(table.getTableName());
+    }
+
+    // Добавить очередной инкремент
+    // TODO: Может приходить больше колонок чем нужно - нужно убедиться что они не обрабатываются напрасно
     public void putTable(TableValues values) {
 
         System.out.println("[cut " + m_jobName + "].putTable " + values.getTable() + " -> " + values.getRowsCnt() + " new rows");
 
-        // TODO: Возможно, не эффективно, возможно, лучше сохранить эти записи в кэше, а записать в таблицы связок потом
+        // TODO: При добавлении новых связок сделать чтение старых значений батчевым
         addNewLinks(values);
+        // TODO: Возможно, не эффективно, возможно, лучше сохранить эти записи в кэше, а записать в таблицы связок потом
 
         for (ColumnValues columnValues: values.getColumnsValues()) {
 
@@ -73,6 +111,9 @@ public class CutJob {
         // Сейчас ключи key2 могут попасть в копилку безусловно из-за связи key2 left join key3
         // А по хорошему ключи key2 должны проверится на связи key1 left join key2
         // Скорее всего логику нужно выносить в класс SingleKey и туда же выносить linkTables
+
+        // TODO: Надо придумать, что делать с большим кол-вом связей на один ключ (когда в value хранитя массив из тысяч ключей)
+        // Нарпимер, prod_ods_ti_gw.cc_claimcontactrole.role = 11 -> Массив из 6382 записей
 
         Column prmColumn = values.getColumn();
 
@@ -98,13 +139,17 @@ public class CutJob {
             for (Column column : m_keys.getSingleKey(prmColumn).getColumns()) {
                 if (linkTable.getTable().getColumns().contains(column)) {
 
-                    ColumnsValues linkedValues = linkTable.lookup(column, values.getValues());
+                    Set<String> nValues = m_keys.removeAlreadyMissed(column, values.getValues());
+
+                    ColumnsValues linkedValues = linkTable.lookup(column, nValues);
+                    m_keys.putMissValues(column, values.getValues(), linkedValues.getValues(column));
 
                     // TODO: Ключи которые пришли по рекурсии из поиска определенной таблицы не должны опять улетать в эту таблицу в поиск
 
                     if (!prmColumn.isActiveFlg()) { // в копилку нужно положить только ключи, которые пересекаются по таблице связок
                         m_keys.getValues(prmColumn).addAll(linkedValues.getValues(column));
-                        System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + (values.getValues().size() - linkedValues.getValues(column).size()) + " new keys [TRASHED]");
+                        System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + (values.getValues().size() - nValues.size()) + " new keys [TRASHED BY CACHE]");
+                        System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + (nValues.size() - linkedValues.getValues(column).size()) + " new keys [TRASHED BY LOOKUP]");
                         System.out.println(blanks + "[cut " + m_jobName + "].addNewKey " + prmColumn + " -> " + linkedValues.getValues(column).size() + " new keys [ADDED]");
                     }
                     linkedValues.removeColumn(column);
@@ -124,5 +169,9 @@ public class CutJob {
 
     public SingleKeysValues getKeys() {
         return m_keys;
+    }
+
+    public String getJobName() {
+        return m_jobName;
     }
 }

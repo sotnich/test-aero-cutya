@@ -6,14 +6,15 @@ import tinkoff.dwh.cut.meta.Column;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class BaseTest {
-    String m_aerospikeHost = "178.128.134.224";
-    String m_namespace = "test";
+//    String m_aerospikeHost = "178.128.134.224";
+//    String m_namespace = "test";
 
-//    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
-//    String m_namespace = "ssd";
+    String m_aerospikeHost = "ds-aerospike01t.tcsbank.ru";
+    String m_namespace = "test";
 
     AerospikeClient m_client;
 
@@ -35,6 +36,9 @@ public class BaseTest {
         assertArrays(a1, listFromArray(values));
     }
 
+    public void assertArrays(HashSet<String> a1, String ... values) {
+        assertArrays(new ArrayList<String>(a1), listFromArray(values));
+    }
     public ArrayList<KeyValue> getKeyValues(String tableName, String... args) {
         ArrayList<KeyValue> ret = new ArrayList<KeyValue>();
         for (int i = 0; i < args.length; i += 2)

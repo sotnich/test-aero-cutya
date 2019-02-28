@@ -1,9 +1,6 @@
 package tinkoff.dwh.cut;
 
-import com.aerospike.client.AerospikeClient;
-import com.aerospike.client.Bin;
-import com.aerospike.client.Key;
-import com.aerospike.client.Record;
+import com.aerospike.client.*;
 import tinkoff.dwh.cut.data.ColumnsValues;
 import tinkoff.dwh.cut.data.KeyValue;
 import tinkoff.dwh.cut.data.TableValues;
@@ -11,15 +8,15 @@ import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.Table;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class CutLinkTable {
 
     private AerospikeClient m_client;
     private String m_namespace;
     private Table m_table;
+
+    private HashMap<Column, HashSet<String>> m_cashMissValues = new HashMap<Column, HashSet<String>>(); // Значения которых точно нет в Aerospike
 
     public CutLinkTable(AerospikeClient client, String namespace, Table table) {
         m_table = table;
@@ -46,8 +43,37 @@ public class CutLinkTable {
         }
     }
 
-    public ColumnsValues lookup(Column prm, List<String> values) {
-        ArrayList<String> prmValuesD = new ArrayList<String>(new HashSet<String>(values));  // Дедубликация входящих ключей
+    // Добавить для массива ключей - массив новых значений
+    //
+    // Например
+    // account_rk
+    //    101 ->
+    //      installment_rk->201,202,...
+    //      customer_rk->301,302,...
+    //    102 ->
+    //      installment_rk->203,202,...
+    //      customer_rk->311,312,...
+    public void addValues(Column prmColumn, HashMap<String, ColumnsValues> newValues) {
+
+        System.out.println("[link " + prmColumn + "].addValues " + " -> " + newValues.size() + " new rows");
+
+        ArrayList<ColumnsValues> curValues = getReferences(prmColumn, new ArrayList<String>(newValues.keySet()));
+
+        int total_new = 0;
+        for (ColumnsValues curValue : curValues) {
+            int oldCnt = curValue.getSize();
+            String prmValue = curValue.getValues(prmColumn).toArray(new String [] {} )[0];
+            curValue.add(newValues.get(prmValue));
+            if (curValue.getSize() > oldCnt)
+                setReference(new KeyValue(prmColumn, prmValue), curValue);
+            total_new += curValue.getSize() - oldCnt;
+        }
+
+        System.out.println("[link " + prmColumn + "].addValues " + " -> " + total_new + " new keys [ADDED]");
+    }
+
+    public ColumnsValues lookup(Column prm, Set<String> values) {
+        ArrayList<String> prmValuesD = new ArrayList<String>(values);
 
         if (prmValuesD.size() <= 30000)
             return getReference(prm, prmValuesD);
@@ -78,7 +104,9 @@ public class CutLinkTable {
     private void addReference(KeyValue prm, ArrayList<KeyValue> row) {
         if (prm.isNonEmpty() && row.size() > 0) {
             ColumnsValues kvRow = getReference(prm);
-            if (kvRow.add(row) > 0)
+            int lenBefore = kvRow.getSize();
+            kvRow.add(row);
+            if (kvRow.getSize() > lenBefore)
                 setReference(prm, kvRow);
         }
     }
@@ -90,8 +118,13 @@ public class CutLinkTable {
                 bins.add(new Bin(column.getColumnName(), row.getValues(column)));
         }
         bins.add(new Bin(prm.getKey().getColumnName(), prm.getValue()));
-        if (bins.size() > 1)
-            m_client.put(null, getKey(prm), bins.toArray(new Bin[0]));
+        if (bins.size() > 1) {
+            try {
+                m_client.put(null, getKey(prm), bins.toArray(new Bin[0]));
+            } catch (AerospikeException e) {
+                e.printStackTrace();
+            }
+        }
         else
             m_client.delete(null, getKey(prm));
     }
@@ -99,6 +132,27 @@ public class CutLinkTable {
     private ColumnsValues getReference(KeyValue prm) {
         Record record = m_client.get(null, getKey(prm), m_table.getColumnNames(prm.getKey()));
         return getRowFromRecord(record, null, m_table.getColumns(prm.getKey()));
+    }
+
+    // Вернуть значения по массиву ключей как массив значений
+    private ArrayList<ColumnsValues> getReferences(Column prmColumn, List<String> keyValues) {
+        ArrayList<ColumnsValues> ret = new ArrayList<ColumnsValues>();
+        if (keyValues.size() == 0) return ret;
+
+        int batchSize = 5000;
+        for (int offset = 0; offset < keyValues.size(); offset += batchSize) {
+            int size = Math.min(batchSize, keyValues.size() - offset);
+            Key[] keys = new Key[size];
+            for (int i = 0; i < size; i++)
+                keys[i] = getKey(prmColumn, keyValues.get(offset + i));
+
+            Record[] records = m_client.get(null, keys, m_table.getColumnNames());
+            for (Record record : records) {
+                if (record != null)
+                    ret.add(getRowFromRecord(record, prmColumn, m_table.getColumns(prmColumn)));
+            }
+        }
+        return ret;
     }
 
     public ColumnsValues getReference(Column prmColumn, List<String> values) {
@@ -114,7 +168,6 @@ public class CutLinkTable {
                 keys[i] = getKey(prmColumn, values.get(offset + i));
 
             Record[] records = m_client.get(null, keys, m_table.getColumnNames());
-            boolean [] exists = m_client.exists(null, keys);
             for (Record record : records) {
                 if (record != null)
                     ret.add(getRowFromRecord(record, prmColumn, m_table.getColumns(prmColumn)));
@@ -136,7 +189,7 @@ public class CutLinkTable {
         ColumnsValues ret = new ColumnsValues(secColumns);
         if (record != null) {
             for (Column column : secColumns) {
-                ret.addColumnValues(column, (ArrayList<String>) record.getValue(column.getColumnName()));
+                ret.addColumnValues(column, (HashSet<String>) record.getValue(column.getColumnName()));
             }
             if (prmColumn != null)
                 ret.addColumnValue(prmColumn, record.getString(prmColumn.getColumnName()));

@@ -1,12 +1,19 @@
 import com.aerospike.client.AerospikeClient;
 import org.apache.commons.cli.*;
 import tinkoff.dwh.cut.CutEngine;
+import tinkoff.dwh.cut.CutJob;
 import tinkoff.dwh.cut.CutLinkTable;
 import tinkoff.dwh.cut.Utils;
+import tinkoff.dwh.cut.data.ColumnValues;
+import tinkoff.dwh.cut.data.ColumnsValues;
+import tinkoff.dwh.cut.data.SingleKeysValues;
 import tinkoff.dwh.cut.data.TableValues;
+import tinkoff.dwh.cut.meta.Column;
+import tinkoff.dwh.cut.meta.SingleKey;
 import tinkoff.dwh.cut.meta.Table;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main {
 
@@ -36,6 +43,14 @@ public class Main {
         for (Table table : m_engine.getTables(m_job)) {
             cutTable(table);
         }
+
+        System.out.println("");
+        for (CutJob job : m_engine.getCuts()) {
+            SingleKeysValues skv = job.getKeys();
+            for (SingleKey sk : skv.getSingleKeys()) {
+                System.out.println("[RESULT " + job.getJobName() + "] " + sk + ": " + skv.getValues(sk).size() );
+            }
+        }
     }
 
     private static void init() {
@@ -44,34 +59,49 @@ public class Main {
         }
     }
 
-    private static void cutTable(Table table) {
-        String csvFile = "./data/" + table.getTableName() + ".inc.csv";
+    private static ArrayList<String> loadCSV(String csvFile) {
         Utils.startStep("load csv " + csvFile);
         ArrayList<String> lines = Utils.loadCSV(csvFile);
         System.out.println("loaded " + lines.size() + " records");
         Utils.finishStep();
+        return lines;
+    }
+
+    private static void cutTable(Table table) {
+        String csvFile = "./data/" + table.getTableName() + ".inc.csv";
+        ArrayList<String> lines = loadCSV(csvFile);
 
         Utils.startStep("add increment for " + table.getTableName());
-//        int numCnt = 1000000;
-//        for (int offcet = 0; offcet < lines.size(); offcet += numCnt) {
-//            TableValues values = Utils.getTableValues(table.getTableName(), lines, offcet, numCnt);
-//            m_engine.putInc(values);
-//        }
-        TableValues values = Utils.getTableValues(table.getTableName(), lines, 0, lines.size());
-        m_engine.putInc(values);
+        if (lines.get(0).split("\\;",-1).length == 1) {
+            ColumnValues values = Utils.getSingleColumnValues(table, lines);
+            m_engine.putColumnValues(table, values);
+        }
+        else {
+            HashMap<Column, HashMap<String, ColumnsValues>> values = Utils.getColumnValues(table, lines);
+            m_engine.putColumnsValues(table, values);
+        }
         Utils.finishStep();
     }
 
     private static void initTable(Table table) {
+
         Utils.startStep("delete all rows from " + table.getTableName());
         Utils.deleteTable(table.getTableName(), m_client, m_namespace);
         Utils.finishStep();
 
         String csvName = "./data/" + table.getTableName() + ".csv";
-        Utils.startStep("load data from " + csvName + " into table " + table.getTableName());
-        CutLinkTable linkTable = new CutLinkTable(m_client, m_namespace, table);
-        Utils.loadFromCSV(linkTable, csvName);
+        ArrayList<String> lines = loadCSV(csvName);
+
+        Utils.startStep("builing values from csv lines for table " + table.getTableName());
+        HashMap<Column, HashMap<String, ColumnsValues>> values = Utils.getColumnValues(table, lines);
         Utils.finishStep();
+
+        CutLinkTable linkTable = new CutLinkTable(m_client, m_namespace, table);
+        for (Column prmColumn : values.keySet()) {
+            Utils.startStep("load data into table " + table.getTableName() + ", column " + prmColumn.getColumnName());
+            linkTable.addValues(prmColumn, values.get(prmColumn));
+            Utils.finishStep();
+        }
 
         Utils.startStep("loading profile for table " + table.getTableName());
         Utils.printSetProfile(table.getTableName(), m_client, m_namespace);

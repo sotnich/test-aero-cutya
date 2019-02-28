@@ -1,7 +1,10 @@
 package tinkoff.dwh.cut;
 
 import com.aerospike.client.AerospikeClient;
+import tinkoff.dwh.cut.data.ColumnValues;
+import tinkoff.dwh.cut.data.ColumnsValues;
 import tinkoff.dwh.cut.data.TableValues;
+import tinkoff.dwh.cut.meta.Column;
 import tinkoff.dwh.cut.meta.JobTableRelations;
 import tinkoff.dwh.cut.meta.Table;
 import tinkoff.dwh.cut.meta.TableRelation;
@@ -144,6 +147,25 @@ public class CutEngine {
             if (!m_cuts.containsKey(jobName))
                 m_cuts.put(jobName, new CutJob(m_client, m_namespace, jobName, this));
             m_cuts.get(jobName).putTable(values);
+        }
+    }
+
+
+    public void putColumnsValues(Table table, HashMap<Column, HashMap<String, ColumnsValues>> values) {
+        for (String jobName : getJobs(table)) {
+            if (!m_cuts.containsKey(jobName))
+                m_cuts.put(jobName, new CutJob(m_client, m_namespace, jobName, this));
+            CutJob cutJob = m_cuts.get(jobName);
+            cutJob.putTable(table, values);
+        }
+    }
+
+    public void putColumnValues(Table table, ColumnValues values) {
+        for (String jobName : getJobs(table)) {
+            if (!m_cuts.containsKey(jobName))
+                m_cuts.put(jobName, new CutJob(m_client, m_namespace, jobName, this));
+            CutJob cutJob = m_cuts.get(jobName);
+            cutJob.putSingleColumn(table, values);
         }
     }
 }
